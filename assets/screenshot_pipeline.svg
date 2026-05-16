@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="930" height="852" viewBox="0 0 930 852">
+<defs>
+  <style>
+    text {
+      font-family: "JetBrains Mono","Cascadia Code","Fira Code","Menlo","Consolas",monospace;
+      font-size: 13px;
+      dominant-baseline: auto;
+    }
+  </style>
+</defs>
+
+<!-- Window shadow -->
+<rect x="4" y="6" width="930" height="852" rx="10" fill="rgba(0,0,0,0.5)"/>
+
+<!-- Window frame -->
+<rect x="0" y="0" width="930" height="852" rx="10" fill="#161b22"/>
+
+<!-- Titlebar -->
+<rect x="0" y="0" width="930" height="42" rx="10" fill="#21262d"/>
+<rect x="0" y="32" width="930" height="10" fill="#21262d"/>
+<line x1="0" y1="42" x2="930" y2="42" stroke="#30363d" stroke-width="1"/>
+
+<!-- Traffic lights -->
+<circle cx="20" cy="21" r="6" fill="#ff5f57"/>
+<circle cx="40" cy="21" r="6" fill="#febc2e"/>
+<circle cx="60" cy="21" r="6" fill="#28c840"/>
+
+<!-- Title text -->
+<text x="465" y="26" fill="#8b949e" font-size="12"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+      text-anchor="middle">Sentinel Fusion — Pipeline — bash</text>
+
+<!-- Terminal background -->
+<rect x="0" y="42" width="930" height="810" fill="#0d1117"/>
+<rect x="0" y="842" width="930" height="10" rx="0" fill="#0d1117"/>
+<rect x="0" y="842" width="930" height="10" rx="10" fill="#0d1117"/>
+
+<text x="24.0" y="82.0" fill="#3fb950" font-weight="bold">~/Sentinel_Fusion</text>
+<text x="166.8" y="82.0" fill="#58a6ff" font-weight="bold"> $ </text>
+<text x="192.0" y="82.0" fill="#e6edf3" font-weight="normal">sentinel run --nra data/samples/nmap_scan.xml --winlog data/samples/windows_log.json</text>
+<text x="24.0" y="106.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">NRA: parsed </text>
+<text x="124.8" y="106.0" fill="#8be9fd" font-weight="bold" opacity="0.55">3</text>
+<text x="133.2" y="106.0" fill="#c9d1d9" font-weight="normal" opacity="0.55"> </text>
+<text x="141.6" y="106.0" fill="#ff79c6" font-weight="bold" opacity="0.55">host</text>
+<text x="175.2" y="106.0" fill="#c9d1d9" font-weight="bold" opacity="0.55">(</text>
+<text x="183.6" y="106.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">s</text>
+<text x="192.0" y="106.0" fill="#c9d1d9" font-weight="bold" opacity="0.55">)</text>
+<text x="200.4" y="106.0" fill="#c9d1d9" font-weight="normal" opacity="0.55"> from nmap_scan.xml</text>
+<text x="24.0" y="146.0" fill="#8be9fd" font-weight="bold">Running pipeline</text>
+<text x="158.4" y="146.0" fill="#c9d1d9" font-weight="normal"> over </text>
+<text x="208.8" y="146.0" fill="#8be9fd" font-weight="bold">18</text>
+<text x="225.6" y="146.0" fill="#c9d1d9" font-weight="normal"> input </text>
+<text x="284.4" y="146.0" fill="#ff79c6" font-weight="bold">event</text>
+<text x="326.4" y="146.0" fill="#c9d1d9" font-weight="bold">(</text>
+<text x="334.8" y="146.0" fill="#c9d1d9" font-weight="normal">s</text>
+<text x="343.2" y="146.0" fill="#c9d1d9" font-weight="bold">)</text>
+<text x="351.6" y="146.0" fill="#f1fa8c" font-weight="normal">...</text>
+<text x="24.0" y="186.0" fill="#50fa7b" font-weight="normal">⠋</text>
+<text x="32.4" y="186.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="40.8" y="186.0" fill="#8be9fd" font-weight="normal">Executing pipeline stages...</text>
+<text x="24.0" y="226.0" fill="#8be9fd" font-weight="bold">Pipeline Trace                </text>
+<text x="24.0" y="246.0" fill="#c9d1d9" font-weight="normal">                              </text>
+<text x="24.0" y="266.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="32.4" y="266.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="40.8" y="266.0" fill="#ffffff" font-weight="bold">Stage    </text>
+<text x="116.4" y="266.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="124.8" y="266.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="133.2" y="266.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="141.6" y="266.0" fill="#ffffff" font-weight="bold">Status</text>
+<text x="192.0" y="266.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="200.4" y="266.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="208.8" y="266.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="217.2" y="266.0" fill="#ffffff" font-weight="bold">Count</text>
+<text x="259.2" y="266.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="267.6" y="266.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="24.0" y="286.0" fill="#c9d1d9" font-weight="normal"> ──────────────────────────── </text>
+<text x="24.0" y="306.0" fill="#c9d1d9" font-weight="normal">  ingest      </text>
+<text x="141.6" y="306.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">ok    </text>
+<text x="192.0" y="306.0" fill="#c9d1d9" font-weight="normal">      18  </text>
+<text x="24.0" y="326.0" fill="#c9d1d9" font-weight="normal">  normalize   </text>
+<text x="141.6" y="326.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">ok    </text>
+<text x="192.0" y="326.0" fill="#c9d1d9" font-weight="normal">      18  </text>
+<text x="24.0" y="346.0" fill="#c9d1d9" font-weight="normal">  enrich      </text>
+<text x="141.6" y="346.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">ok    </text>
+<text x="192.0" y="346.0" fill="#c9d1d9" font-weight="normal">      18  </text>
+<text x="24.0" y="366.0" fill="#c9d1d9" font-weight="normal">  correlate   </text>
+<text x="141.6" y="366.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">ok    </text>
+<text x="192.0" y="366.0" fill="#c9d1d9" font-weight="normal">       3  </text>
+<text x="24.0" y="386.0" fill="#c9d1d9" font-weight="normal">  detect      </text>
+<text x="141.6" y="386.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">ok    </text>
+<text x="192.0" y="386.0" fill="#c9d1d9" font-weight="normal">      14  </text>
+<text x="24.0" y="406.0" fill="#c9d1d9" font-weight="normal">  score       </text>
+<text x="141.6" y="406.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">ok    </text>
+<text x="192.0" y="406.0" fill="#c9d1d9" font-weight="normal">       —  </text>
+<text x="24.0" y="426.0" fill="#c9d1d9" font-weight="normal">  timeline    </text>
+<text x="141.6" y="426.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">ok    </text>
+<text x="192.0" y="426.0" fill="#c9d1d9" font-weight="normal">      33  </text>
+<text x="24.0" y="446.0" fill="#c9d1d9" font-weight="normal">  report      </text>
+<text x="141.6" y="446.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">ok    </text>
+<text x="192.0" y="446.0" fill="#c9d1d9" font-weight="normal">       —  </text>
+<text x="24.0" y="466.0" fill="#c9d1d9" font-weight="normal">                              </text>
+<text x="24.0" y="486.0" fill="#50fa7b" font-weight="bold">✓</text>
+<text x="32.4" y="486.0" fill="#c9d1d9" font-weight="normal"> Persisted as </text>
+<text x="150.0" y="486.0" fill="#c9d1d9" font-weight="bold">run-20260516T184148-f488b595</text>
+<text x="24.0" y="506.0" fill="#c9d1d9" font-weight="normal">  Events: </text>
+<text x="108.0" y="506.0" fill="#8be9fd" font-weight="bold">18</text>
+<text x="124.8" y="506.0" fill="#c9d1d9" font-weight="normal">  │  Alerts: </text>
+<text x="234.0" y="506.0" fill="#ff5555" font-weight="bold">14</text>
+<text x="250.8" y="506.0" fill="#c9d1d9" font-weight="normal">  │  Run ID: </text>
+<text x="360.0" y="506.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">run-20260516T184148-f488b595</text>
+<text x="24.0" y="546.0" fill="#8be9fd" font-weight="bold">Top Alerts                                                                      </text>
+<text x="24.0" y="566.0" fill="#c9d1d9" font-weight="normal">                                                                                </text>
+<text x="24.0" y="586.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="32.4" y="586.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="40.8" y="586.0" fill="#ffffff" font-weight="bold">Type               </text>
+<text x="200.4" y="586.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="208.8" y="586.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="217.2" y="586.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="225.6" y="586.0" fill="#ffffff" font-weight="bold">Confidence      </text>
+<text x="360.0" y="586.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="368.4" y="586.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="376.8" y="586.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="385.2" y="586.0" fill="#ffffff" font-weight="bold">Src IP        </text>
+<text x="502.8" y="586.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="511.2" y="586.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="519.6" y="586.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="528.0" y="586.0" fill="#ffffff" font-weight="bold">MITRE             </text>
+<text x="679.2" y="586.0" fill="#ffffff" font-weight="bold"> </text>
+<text x="687.6" y="586.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="24.0" y="606.0" fill="#c9d1d9" font-weight="normal"> ────────────────────────────────────────────────────────────────────────────── </text>
+<text x="24.0" y="626.0" fill="#c9d1d9" font-weight="normal">  correlated_attack_…   ██████████  0.99   185.220.101.45   TA0006 -            </text>
+<text x="24.0" y="646.0" fill="#c9d1d9" font-weight="normal">                                                            Credential Access   </text>
+<text x="24.0" y="666.0" fill="#c9d1d9" font-weight="normal">  threat_feed_match     ██████████  0.99   185.220.101.45   TA0043 -            </text>
+<text x="24.0" y="686.0" fill="#c9d1d9" font-weight="normal">                                                            Reconnaissance      </text>
+<text x="24.0" y="706.0" fill="#c9d1d9" font-weight="normal">  WINLOG-006            ██████████  0.99   —                TA0005 - Defense    </text>
+<text x="24.0" y="726.0" fill="#c9d1d9" font-weight="normal">                                                            Evasion             </text>
+<text x="24.0" y="746.0" fill="#c9d1d9" font-weight="normal">  correlated_pivot_c…   ██████████  0.97   185.220.101.45   TA0006 -            </text>
+<text x="24.0" y="766.0" fill="#c9d1d9" font-weight="normal">                                                            Credential Access   </text>
+<text x="24.0" y="786.0" fill="#c9d1d9" font-weight="normal">  correlated_attack_…   █████████░  0.90   10.0.0.10        TA0006 -            </text>
+<text x="24.0" y="806.0" fill="#c9d1d9" font-weight="normal">                                                            Credential Access</text>
+</svg>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nmaprun scanner="nmap" start="1746964800" version="7.94" args="nmap -sV -sC -p- 10.0.0.0/24">
+
+  <!-- Host 1: Exposed Windows server - RDP, SMB, MSSQL, RPC -->
+  <host>
+    <address addr="10.0.0.10" addrtype="ipv4"/>
+    <ports>
+      <port protocol="tcp" portid="135">
+        <state state="open" reason="syn-ack"/>
+        <service name="msrpc" product="Microsoft Windows RPC"/>
+      </port>
+      <port protocol="tcp" portid="139">
+        <state state="open" reason="syn-ack"/>
+        <service name="netbios-ssn" product="Microsoft Windows netbios-ssn"/>
+      </port>
+      <port protocol="tcp" portid="445">
+        <state state="open" reason="syn-ack"/>
+        <service name="microsoft-ds" product="Microsoft Windows Server 2019"/>
+      </port>
+      <port protocol="tcp" portid="1433">
+        <state state="open" reason="syn-ack"/>
+        <service name="ms-sql-s" product="Microsoft SQL Server 2019"/>
+      </port>
+      <port protocol="tcp" portid="3389">
+        <state state="open" reason="syn-ack"/>
+        <service name="ms-wbt-server" product="Microsoft Terminal Services"/>
+      </port>
+    </ports>
+  </host>
+
+  <!-- Host 2: Linux database server - SSH, MySQL, Redis, HTTP -->
+  <host>
+    <address addr="10.0.0.11" addrtype="ipv4"/>
+    <ports>
+      <port protocol="tcp" portid="22">
+        <state state="open" reason="syn-ack"/>
+        <service name="ssh" product="OpenSSH" version="8.9p1"/>
+      </port>
+      <port protocol="tcp" portid="80">
+        <state state="open" reason="syn-ack"/>
+        <service name="http" product="Apache httpd" version="2.4.54"/>
+      </port>
+      <port protocol="tcp" portid="3306">
+        <state state="open" reason="syn-ack"/>
+        <service name="mysql" product="MySQL" version="8.0.31"/>
+      </port>
+      <port protocol="tcp" portid="6379">
+        <state state="open" reason="syn-ack"/>
+        <service name="redis" product="Redis key-value store" version="7.0.5"/>
+      </port>
+    </ports>
+  </host>
+
+  <!-- Host 3: Legacy device - Telnet, FTP, VNC -->
+  <host>
+    <address addr="10.0.0.20" addrtype="ipv4"/>
+    <ports>
+      <port protocol="tcp" portid="21">
+        <state state="open" reason="syn-ack"/>
+        <service name="ftp" product="vsftpd" version="2.3.4"/>
+      </port>
+      <port protocol="tcp" portid="23">
+        <state state="open" reason="syn-ack"/>
+        <service name="telnet" product="Linux telnetd"/>
+      </port>
+      <port protocol="tcp" portid="5900">
+        <state state="open" reason="syn-ack"/>
+        <service name="vnc" product="VNC" version="RFB 003.008"/>
+      </port>
+    </ports>
+  </host>
+
+</nmaprun>

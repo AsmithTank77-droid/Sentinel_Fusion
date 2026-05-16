@@ -1,0 +1,302 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="930" height="2032" viewBox="0 0 930 2032">
+<defs>
+  <style>
+    text {
+      font-family: "JetBrains Mono","Cascadia Code","Fira Code","Menlo","Consolas",monospace;
+      font-size: 13px;
+      dominant-baseline: auto;
+    }
+  </style>
+</defs>
+
+<!-- Window shadow -->
+<rect x="4" y="6" width="930" height="2032" rx="10" fill="rgba(0,0,0,0.5)"/>
+
+<!-- Window frame -->
+<rect x="0" y="0" width="930" height="2032" rx="10" fill="#161b22"/>
+
+<!-- Titlebar -->
+<rect x="0" y="0" width="930" height="42" rx="10" fill="#21262d"/>
+<rect x="0" y="32" width="930" height="10" fill="#21262d"/>
+<line x1="0" y1="42" x2="930" y2="42" stroke="#30363d" stroke-width="1"/>
+
+<!-- Traffic lights -->
+<circle cx="20" cy="21" r="6" fill="#ff5f57"/>
+<circle cx="40" cy="21" r="6" fill="#febc2e"/>
+<circle cx="60" cy="21" r="6" fill="#28c840"/>
+
+<!-- Title text -->
+<text x="465" y="26" fill="#8b949e" font-size="12"
+      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"
+      text-anchor="middle">Sentinel Fusion — SOC Report — bash</text>
+
+<!-- Terminal background -->
+<rect x="0" y="42" width="930" height="1990" fill="#0d1117"/>
+<rect x="0" y="2022" width="930" height="10" rx="0" fill="#0d1117"/>
+<rect x="0" y="2022" width="930" height="10" rx="10" fill="#0d1117"/>
+
+<text x="24.0" y="82.0" fill="#3fb950" font-weight="bold">~/Sentinel_Fusion</text>
+<text x="166.8" y="82.0" fill="#58a6ff" font-weight="bold"> $ </text>
+<text x="192.0" y="82.0" fill="#e6edf3" font-weight="normal">sentinel run --nra ... --winlog ... --report</text>
+<text x="24.0" y="106.0" fill="#69ff94" font-weight="normal">────────────────────────────────── </text>
+<text x="318.0" y="106.0" fill="#8be9fd" font-weight="bold">SOC Report</text>
+<text x="402.0" y="106.0" fill="#69ff94" font-weight="normal"> ──────────────────────────────────</text>
+<text x="24.0" y="126.0" fill="#c9d1d9" font-weight="normal">                           </text>
+<text x="250.8" y="126.0" fill="#c9d1d9" font-weight="bold">Sentinel_Fusion SOC Report</text>
+<text x="469.2" y="126.0" fill="#c9d1d9" font-weight="normal">                           </text>
+<text x="24.0" y="166.0" fill="#c9d1d9" font-weight="bold">Generated:</text>
+<text x="108.0" y="166.0" fill="#c9d1d9" font-weight="normal"> 2026-05-16T18:41:48Z                                                 </text>
+<text x="24.0" y="186.0" fill="#c9d1d9" font-weight="bold">Total Events:</text>
+<text x="133.2" y="186.0" fill="#c9d1d9" font-weight="normal"> 18                                                                </text>
+<text x="24.0" y="206.0" fill="#c9d1d9" font-weight="bold">Total Alerts:</text>
+<text x="133.2" y="206.0" fill="#c9d1d9" font-weight="normal"> 14                                                                </text>
+<text x="24.0" y="246.0" fill="#ff79c6" font-weight="normal">Executive Summary</text>
+<text x="166.8" y="246.0" fill="#c9d1d9" font-weight="normal">                                                               </text>
+<text x="24.0" y="286.0" fill="#c9d1d9" font-weight="bold">Generated:</text>
+<text x="108.0" y="286.0" fill="#c9d1d9" font-weight="normal"> 2026-05-16T18:41:48Z                                                 </text>
+<text x="24.0" y="306.0" fill="#c9d1d9" font-weight="bold">Overall Verdict:</text>
+<text x="158.4" y="306.0" fill="#c9d1d9" font-weight="normal"> Critical                                                       </text>
+<text x="24.0" y="346.0" fill="#ff79c6" font-weight="bold">Risk Surface</text>
+<text x="124.8" y="346.0" fill="#c9d1d9" font-weight="normal">                                                                    </text>
+<text x="24.0" y="386.0" fill="#8be9fd" font-weight="normal">                                                                                </text>
+<text x="24.0" y="406.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="406.0" fill="#8be9fd" font-weight="normal">Metric</text>
+<text x="82.8" y="406.0" fill="#c9d1d9" font-weight="bold">                              </text>
+<text x="334.8" y="406.0" fill="#c9d1d9" font-weight="bold"> </text>
+<text x="343.2" y="406.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="406.0" fill="#8be9fd" font-weight="normal">Value</text>
+<text x="393.6" y="406.0" fill="#c9d1d9" font-weight="bold">                                   </text>
+<text x="687.6" y="406.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="426.0" fill="#8be9fd" font-weight="normal"> ────────────────────────────────────────────────────────────────────────────── </text>
+<text x="24.0" y="446.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="446.0" fill="#c9d1d9" font-weight="normal">Critical Hosts                       </text>
+<text x="343.2" y="446.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="446.0" fill="#c9d1d9" font-weight="normal">1                                       </text>
+<text x="687.6" y="446.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="466.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="466.0" fill="#c9d1d9" font-weight="normal">High Hosts                           </text>
+<text x="343.2" y="466.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="466.0" fill="#c9d1d9" font-weight="normal">0                                       </text>
+<text x="687.6" y="466.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="486.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="486.0" fill="#c9d1d9" font-weight="normal">Medium Hosts                         </text>
+<text x="343.2" y="486.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="486.0" fill="#c9d1d9" font-weight="normal">2                                       </text>
+<text x="687.6" y="486.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="506.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="506.0" fill="#c9d1d9" font-weight="normal">Low Hosts                            </text>
+<text x="343.2" y="506.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="506.0" fill="#c9d1d9" font-weight="normal">0                                       </text>
+<text x="687.6" y="506.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="526.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="526.0" fill="#c9d1d9" font-weight="normal">Total Alerts                         </text>
+<text x="343.2" y="526.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="526.0" fill="#c9d1d9" font-weight="normal">14                                      </text>
+<text x="687.6" y="526.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="546.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="546.0" fill="#c9d1d9" font-weight="normal">Significant Alerts (≥30% confidence) </text>
+<text x="343.2" y="546.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="546.0" fill="#c9d1d9" font-weight="normal">14                                      </text>
+<text x="687.6" y="546.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="566.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="566.0" fill="#c9d1d9" font-weight="normal">Attack Surface                       </text>
+<text x="343.2" y="566.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="566.0" fill="#c9d1d9" font-weight="bold">Significant</text>
+<text x="444.0" y="566.0" fill="#c9d1d9" font-weight="normal">                             </text>
+<text x="687.6" y="566.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="586.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="586.0" fill="#c9d1d9" font-weight="normal">Lateral Movement                     </text>
+<text x="343.2" y="586.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="586.0" fill="#c9d1d9" font-weight="normal">Yes                                     </text>
+<text x="687.6" y="586.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="606.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="606.0" fill="#c9d1d9" font-weight="normal">WINLOG Rules Fired                   </text>
+<text x="343.2" y="606.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="606.0" fill="#c9d1d9" font-weight="normal">WINLOG-005, WINLOG-006, WINLOG-009      </text>
+<text x="687.6" y="606.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="626.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="626.0" fill="#c9d1d9" font-weight="normal">MITRE Tactics                        </text>
+<text x="343.2" y="626.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="626.0" fill="#c9d1d9" font-weight="normal">TA0001 - Initial Access, TA0003 -       </text>
+<text x="687.6" y="626.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="646.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="646.0" fill="#c9d1d9" font-weight="normal">                                     </text>
+<text x="343.2" y="646.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="646.0" fill="#c9d1d9" font-weight="normal">Persistence, TA0004 - Privilege         </text>
+<text x="687.6" y="646.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="666.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="666.0" fill="#c9d1d9" font-weight="normal">                                     </text>
+<text x="343.2" y="666.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="666.0" fill="#c9d1d9" font-weight="normal">Escalation, TA0005 - Defense Evasion,   </text>
+<text x="687.6" y="666.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="686.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="686.0" fill="#c9d1d9" font-weight="normal">                                     </text>
+<text x="343.2" y="686.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="686.0" fill="#c9d1d9" font-weight="normal">TA0006 - Credential Access, TA0008 -    </text>
+<text x="687.6" y="686.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="706.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="706.0" fill="#c9d1d9" font-weight="normal">                                     </text>
+<text x="343.2" y="706.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="706.0" fill="#c9d1d9" font-weight="normal">Lateral Movement, TA0043 -              </text>
+<text x="687.6" y="706.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="726.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="726.0" fill="#c9d1d9" font-weight="normal">                                     </text>
+<text x="343.2" y="726.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="351.6" y="726.0" fill="#c9d1d9" font-weight="normal">Reconnaissance                          </text>
+<text x="687.6" y="726.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="746.0" fill="#8be9fd" font-weight="normal">                                                                                </text>
+<text x="24.0" y="786.0" fill="#ff79c6" font-weight="bold">Key Findings</text>
+<text x="124.8" y="786.0" fill="#c9d1d9" font-weight="normal">                                                                    </text>
+<text x="24.0" y="826.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="826.0" fill="#c9d1d9" font-weight="normal">Highest-risk host: 10.0.0.10 — Critical (score 9.8/10).                      </text>
+<text x="24.0" y="846.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="846.0" fill="#c9d1d9" font-weight="normal">3 host(s) assessed; 1 Critical risk host(s) require immediate attention.     </text>
+<text x="24.0" y="866.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="866.0" fill="#c9d1d9" font-weight="normal">Lateral movement detected across 1 hop(s) — attacker has likely pivoted      </text>
+<text x="24.0" y="886.0" fill="#c9d1d9" font-weight="bold">   </text>
+<text x="49.2" y="886.0" fill="#c9d1d9" font-weight="normal">beyond the initial entry point.                                              </text>
+<text x="24.0" y="906.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="906.0" fill="#c9d1d9" font-weight="normal">Attack surface expansion rated 'Significant' (score 7.5/10) — multiple       </text>
+<text x="24.0" y="926.0" fill="#c9d1d9" font-weight="bold">   </text>
+<text x="49.2" y="926.0" fill="#c9d1d9" font-weight="normal">techniques and targets observed in this session.                             </text>
+<text x="24.0" y="946.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="946.0" fill="#c9d1d9" font-weight="normal">3 Windows behavioural rule(s) fired: WINLOG-005, WINLOG-006, WINLOG-009.     </text>
+<text x="24.0" y="966.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="966.0" fill="#c9d1d9" font-weight="normal">Critical/High NRA service exposure: NETBIOS-SSN on 10.0.0.10:139, MYSQL on   </text>
+<text x="24.0" y="986.0" fill="#c9d1d9" font-weight="bold">   </text>
+<text x="49.2" y="986.0" fill="#c9d1d9" font-weight="normal">10.0.0.11:3306, REDIS on 10.0.0.11:6379 (+3 more).                           </text>
+<text x="24.0" y="1006.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="1006.0" fill="#c9d1d9" font-weight="normal">MITRE ATT&amp;CK tactics observed: TA0001 - Initial Access, TA0003 - Persistence,</text>
+<text x="24.0" y="1026.0" fill="#c9d1d9" font-weight="bold">   </text>
+<text x="49.2" y="1026.0" fill="#c9d1d9" font-weight="normal">TA0004 - Privilege Escalation, TA0005 - Defense Evasion, TA0006 - Credential </text>
+<text x="24.0" y="1046.0" fill="#c9d1d9" font-weight="bold">   </text>
+<text x="49.2" y="1046.0" fill="#c9d1d9" font-weight="normal">Access, TA0008 - Lateral Movement, TA0043 - Reconnaissance.                  </text>
+<text x="24.0" y="1086.0" fill="#ff79c6" font-weight="bold">Immediate Actions Required</text>
+<text x="242.4" y="1086.0" fill="#c9d1d9" font-weight="normal">                                                      </text>
+<text x="24.0" y="1126.0" fill="#8be9fd" font-weight="normal"> 1 </text>
+<text x="49.2" y="1126.0" fill="#c9d1d9" font-weight="normal">Isolate Critical host(s) pending investigation: 10.0.0.10.                   </text>
+<text x="24.0" y="1146.0" fill="#8be9fd" font-weight="normal"> 2 </text>
+<text x="49.2" y="1146.0" fill="#c9d1d9" font-weight="normal">Engage incident response — lateral movement confirmed. Scope the blast radius</text>
+<text x="24.0" y="1166.0" fill="#8be9fd" font-weight="normal">   </text>
+<text x="49.2" y="1166.0" fill="#c9d1d9" font-weight="normal">before any remediation.                                                      </text>
+<text x="24.0" y="1186.0" fill="#8be9fd" font-weight="normal"> 3 </text>
+<text x="49.2" y="1186.0" fill="#c9d1d9" font-weight="normal">[WINLOG-006] Audit log cleared — treat as active evidence tampering. Engage  </text>
+<text x="24.0" y="1206.0" fill="#8be9fd" font-weight="normal">   </text>
+<text x="49.2" y="1206.0" fill="#c9d1d9" font-weight="normal">incident response and preserve all available artefacts.                      </text>
+<text x="24.0" y="1226.0" fill="#8be9fd" font-weight="normal"> 4 </text>
+<text x="49.2" y="1226.0" fill="#c9d1d9" font-weight="normal">[WINLOG-009] Scheduled task persistence detected — enumerate and remove      </text>
+<text x="24.0" y="1246.0" fill="#8be9fd" font-weight="normal">   </text>
+<text x="49.2" y="1246.0" fill="#c9d1d9" font-weight="normal">unauthorised scheduled tasks; review the process that created them.          </text>
+<text x="24.0" y="1266.0" fill="#8be9fd" font-weight="normal"> 5 </text>
+<text x="49.2" y="1266.0" fill="#c9d1d9" font-weight="normal">Apply emergency controls for Critical-risk network service(s): TELNET        </text>
+<text x="24.0" y="1286.0" fill="#8be9fd" font-weight="normal">   </text>
+<text x="49.2" y="1286.0" fill="#c9d1d9" font-weight="normal">(10.0.0.20:23).                                                              </text>
+<text x="24.0" y="1326.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">--------------------------------------------------------------------------------</text>
+<text x="24.0" y="1366.0" fill="#ff79c6" font-weight="normal">Attack Surface Overview</text>
+<text x="217.2" y="1366.0" fill="#c9d1d9" font-weight="normal">                                                         </text>
+<text x="24.0" y="1406.0" fill="#8be9fd" font-weight="normal">                                    </text>
+<text x="24.0" y="1426.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="1426.0" fill="#8be9fd" font-weight="normal">Metric</text>
+<text x="82.8" y="1426.0" fill="#c9d1d9" font-weight="bold">               </text>
+<text x="208.8" y="1426.0" fill="#c9d1d9" font-weight="bold"> </text>
+<text x="217.2" y="1426.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="225.6" y="1426.0" fill="#8be9fd" font-weight="normal">Value</text>
+<text x="267.6" y="1426.0" fill="#c9d1d9" font-weight="bold">      </text>
+<text x="318.0" y="1426.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="1446.0" fill="#8be9fd" font-weight="normal"> ────────────────────────────────── </text>
+<text x="24.0" y="1466.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="1466.0" fill="#c9d1d9" font-weight="normal">Expansion Score       </text>
+<text x="217.2" y="1466.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="225.6" y="1466.0" fill="#c9d1d9" font-weight="normal">7.5 / 10   </text>
+<text x="318.0" y="1466.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="1486.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="1486.0" fill="#c9d1d9" font-weight="normal">Expansion Label       </text>
+<text x="217.2" y="1486.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="225.6" y="1486.0" fill="#c9d1d9" font-weight="bold">significant</text>
+<text x="318.0" y="1486.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="1506.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="1506.0" fill="#c9d1d9" font-weight="normal">External Sources      </text>
+<text x="217.2" y="1506.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="225.6" y="1506.0" fill="#c9d1d9" font-weight="normal">1          </text>
+<text x="318.0" y="1506.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="1526.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="1526.0" fill="#c9d1d9" font-weight="normal">Internal Targets      </text>
+<text x="217.2" y="1526.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="225.6" y="1526.0" fill="#c9d1d9" font-weight="normal">3          </text>
+<text x="318.0" y="1526.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="1546.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="1546.0" fill="#c9d1d9" font-weight="normal">Lateral Movement Hops </text>
+<text x="217.2" y="1546.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="225.6" y="1546.0" fill="#c9d1d9" font-weight="normal">1          </text>
+<text x="318.0" y="1546.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="1566.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="1566.0" fill="#c9d1d9" font-weight="normal">Distinct Event Types  </text>
+<text x="217.2" y="1566.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="225.6" y="1566.0" fill="#c9d1d9" font-weight="normal">8          </text>
+<text x="318.0" y="1566.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="1586.0" fill="#8be9fd" font-weight="normal">                                    </text>
+<text x="24.0" y="1626.0" fill="#c9d1d9" font-weight="bold">MITRE ATT&amp;CK Tactics Observed:</text>
+<text x="276.0" y="1626.0" fill="#c9d1d9" font-weight="normal">                                                  </text>
+<text x="24.0" y="1666.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="1666.0" fill="#c9d1d9" font-weight="normal">TA0001 - Initial Access                                                      </text>
+<text x="24.0" y="1686.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="1686.0" fill="#c9d1d9" font-weight="normal">TA0003 - Persistence                                                         </text>
+<text x="24.0" y="1706.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="1706.0" fill="#c9d1d9" font-weight="normal">TA0004 - Privilege Escalation                                                </text>
+<text x="24.0" y="1726.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="1726.0" fill="#c9d1d9" font-weight="normal">TA0005 - Defense Evasion                                                     </text>
+<text x="24.0" y="1746.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="1746.0" fill="#c9d1d9" font-weight="normal">TA0006 - Credential Access                                                   </text>
+<text x="24.0" y="1766.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="1766.0" fill="#c9d1d9" font-weight="normal">TA0008 - Lateral Movement                                                    </text>
+<text x="24.0" y="1786.0" fill="#c9d1d9" font-weight="bold"> • </text>
+<text x="49.2" y="1786.0" fill="#c9d1d9" font-weight="normal">TA0043 - Reconnaissance                                                      </text>
+<text x="24.0" y="1826.0" fill="#c9d1d9" font-weight="normal" opacity="0.55">--------------------------------------------------------------------------------</text>
+<text x="24.0" y="1866.0" fill="#ff79c6" font-weight="normal">Host Risk Scores</text>
+<text x="158.4" y="1866.0" fill="#c9d1d9" font-weight="normal">                                                                </text>
+<text x="24.0" y="1906.0" fill="#8be9fd" font-weight="normal">                                                       </text>
+<text x="24.0" y="1926.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="1926.0" fill="#8be9fd" font-weight="normal">Host</text>
+<text x="66.0" y="1926.0" fill="#c9d1d9" font-weight="bold">     </text>
+<text x="108.0" y="1926.0" fill="#c9d1d9" font-weight="bold"> </text>
+<text x="116.4" y="1926.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="124.8" y="1926.0" fill="#8be9fd" font-weight="normal">Risk Score</text>
+<text x="208.8" y="1926.0" fill="#c9d1d9" font-weight="bold"> </text>
+<text x="217.2" y="1926.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="225.6" y="1926.0" fill="#8be9fd" font-weight="normal">Label</text>
+<text x="267.6" y="1926.0" fill="#c9d1d9" font-weight="bold">   </text>
+<text x="292.8" y="1926.0" fill="#c9d1d9" font-weight="bold"> </text>
+<text x="301.2" y="1926.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="309.6" y="1926.0" fill="#8be9fd" font-weight="normal">Alerts</text>
+<text x="360.0" y="1926.0" fill="#c9d1d9" font-weight="bold"> </text>
+<text x="368.4" y="1926.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="376.8" y="1926.0" fill="#8be9fd" font-weight="normal">Max Severity</text>
+<text x="477.6" y="1926.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="1946.0" fill="#8be9fd" font-weight="normal"> ───────────────────────────────────────────────────── </text>
+<text x="24.0" y="1966.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="1966.0" fill="#8be9fd" font-weight="bold">10.0.0.10</text>
+<text x="108.0" y="1966.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="116.4" y="1966.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="124.8" y="1966.0" fill="#c9d1d9" font-weight="normal">9.8        </text>
+<text x="217.2" y="1966.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="225.6" y="1966.0" fill="#c9d1d9" font-weight="bold">critical</text>
+<text x="292.8" y="1966.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="301.2" y="1966.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="309.6" y="1966.0" fill="#c9d1d9" font-weight="normal">10     </text>
+<text x="368.4" y="1966.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="376.8" y="1966.0" fill="#c9d1d9" font-weight="normal">8           </text>
+<text x="477.6" y="1966.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="24.0" y="1986.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="32.4" y="1986.0" fill="#8be9fd" font-weight="bold">10.0.0.20</text>
+<text x="108.0" y="1986.0" fill="#c9d1d9" font-weight="normal"> </text>
+<text x="116.4" y="1986.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="124.8" y="1986.0" fill="#c9d1d9" font-weight="normal">5.2        </text>
+<text x="217.2" y="1986.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="225.6" y="1986.0" fill="#c9d1d9" font-weight="bold">medium</text>
+<text x="276.0" y="1986.0" fill="#c9d1d9" font-weight="normal">   </text>
+<text x="301.2" y="1986.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="309.6" y="1986.0" fill="#c9d1d9" font-weight="normal">0      </text>
+<text x="368.4" y="1986.0" fill="#8be9fd" font-weight="normal"> </text>
+<text x="376.8" y="1986.0" fill="#c9d1d9" font-weight="normal">5           </text>
+<text x="477.6" y="1986.0" fill="#8be9fd" font-weight="normal"> </text>
+</svg>

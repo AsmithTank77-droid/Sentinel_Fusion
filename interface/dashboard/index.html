@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentinel Fusion — SOC Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  --bg:          #060c17;
+  --bg-2:        #0a1220;
+  --bg-3:        #0d1828;
+  --bg-hover:    #121f30;
+  --border:      rgba(148,163,184,0.07);
+  --border-a:    rgba(56,189,248,0.2);
+
+  --text:        #cbd5e1;
+  --text-2:      #64748b;
+  --text-3:      #334155;
+
+  --blue:        #38bdf8;
+  --blue-dim:    rgba(56,189,248,0.12);
+  --red:         #ef4444;
+  --orange:      #f97316;
+  --yellow:      #eab308;
+  --green:       #22c55e;
+  --purple:      #a78bfa;
+
+  --critical:    #ef4444;
+  --high:        #f97316;
+  --medium:      #eab308;
+  --low:         #22c55e;
+
+  --sidebar-w:   216px;
+  --topbar-h:    52px;
+  --radius:      6px;
+  --font-mono:   'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+/* ── Reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 13px; overflow: hidden; }
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; font-size: inherit; border: none; }
+input, select { font-family: inherit; font-size: inherit; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-hover); border-radius: 2px; }
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+#shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: 1fr;
+  height: 100vh;
+}
+
+/* ── Sidebar ───────────────────────────────────────────────────────────── */
+#sidebar {
+  background: var(--bg-2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.brand {
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  gap: 3px;
+}
+.brand-name {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #fff;
+  font-family: var(--font-mono);
+}
+.brand-sub {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--blue);
+  font-weight: 600;
+}
+.brand-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+nav { flex: 1; padding: 10px 0; overflow-y: auto; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+  user-select: none;
+}
+.nav-item:hover { color: var(--text); background: var(--bg-hover); }
+.nav-item.active {
+  color: var(--blue);
+  background: var(--blue-dim);
+  border-left-color: var(--blue);
+}
+.nav-item svg { opacity: 0.7; flex-shrink: 0; }
+.nav-item.active svg { opacity: 1; }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  line-height: 16px;
+  font-family: var(--font-mono);
+}
+
+.nav-section-label {
+  padding: 14px 20px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.sidebar-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+/* ── Content area ──────────────────────────────────────────────────────── */
+#content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* ── Topbar ────────────────────────────────────────────────────────────── */
+#topbar {
+  height: var(--topbar-h);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  flex-shrink: 0;
+  background: var(--bg-2);
+}
+.page-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text);
+  flex: 1;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: var(--text-2);
+  font-size: 11.5px;
+}
+.live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--green);
+  font-size: 11px;
+}
+.live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: livePulse 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+  50%       { opacity: 0.85; box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+}
+.db-label {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+/* ── Main scroll area ──────────────────────────────────────────────────── */
+#main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+}
+
+/* ── Sections ──────────────────────────────────────────────────────────── */
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── Stat cards ────────────────────────────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--border-a); }
+.stat-card-accent {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.stat-icon {
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.stat-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-top: 6px;
+}
+.stat-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 4px;
+  font-family: var(--font-mono);
+}
+
+/* ── Panel / Card container ────────────────────────────────────────────── */
+.panel {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-3);
+}
+.panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  flex: 1;
+}
+.panel-count {
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--font-mono);
+}
+
+/* ── Overview two-col layout ───────────────────────────────────────────── */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.chart-box {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.chart-box-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  margin-bottom: 14px;
+}
+.chart-wrap { position: relative; height: 180px; }
+
+/* ── Tables ────────────────────────────────────────────────────────────── */
+.sf-table { width: 100%; border-collapse: collapse; }
+.sf-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  background: var(--bg-3);
+}
+.sf-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.sf-table tr:last-child td { border-bottom: none; }
+.sf-table tbody tr:hover { background: var(--bg-hover); }
+
+/* Alert rows with left severity border */
+.sf-table tbody tr.sev-critical { border-left: 3px solid var(--critical); }
+.sf-table tbody tr.sev-high     { border-left: 3px solid var(--high); }
+.sf-table tbody tr.sev-medium   { border-left: 3px solid var(--medium); }
+.sf-table tbody tr.sev-low      { border-left: 3px solid var(--low); }
+
+/* ── Badges / pills ────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.badge-critical { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+.badge-high     { background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
+.badge-medium   { background: rgba(234,179,8,0.15);  color: #eab308; border: 1px solid rgba(234,179,8,0.3); }
+.badge-low      { background: rgba(34,197,94,0.15);  color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.status-open          { background: rgba(239,68,68,0.12);  color: #ef4444; }
+.status-investigating { background: rgba(234,179,8,0.12);  color: #eab308; }
+.status-contained     { background: rgba(56,189,248,0.12); color: #38bdf8; }
+.status-closed        { background: rgba(100,116,139,0.12);color: #64748b; }
+.status-completed     { background: rgba(34,197,94,0.12);  color: #22c55e; }
+.status-running       { background: rgba(167,139,250,0.12);color: #a78bfa; }
+.status-failed        { background: rgba(239,68,68,0.12);  color: #ef4444; }
+
+/* MITRE tactic */
+.mitre-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--purple);
+  background: rgba(167,139,250,0.1);
+  border: 1px solid rgba(167,139,250,0.2);
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* Monospace IP/hash */
+code.ip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--blue);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+code.ip:hover { opacity: 0.75; }
+code.hash {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+/* ── Confidence bar ────────────────────────────────────────────────────── */
+.conf-wrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 90px;
+}
+.conf-track {
+  flex: 1;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 50px;
+}
+.conf-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--blue), var(--purple));
+  transition: width 0.4s ease;
+}
+.conf-val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* ── Score bar ─────────────────────────────────────────────────────────── */
+.score-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+.score-bar-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.score-val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ── Top risk hosts panel ──────────────────────────────────────────────── */
+.host-item {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.host-item:last-child { border-bottom: none; }
+.host-item:hover { background: var(--bg-hover); }
+.host-ip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--blue);
+  margin-bottom: 5px;
+}
+.host-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+/* ── Alert detail expand ───────────────────────────────────────────────── */
+.alert-expand {
+  background: var(--bg-3);
+  border-top: 1px solid var(--border);
+  padding: 14px 16px;
+  display: none;
+}
+.alert-expand.open { display: block; }
+.alert-expand-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px 20px;
+  margin-bottom: 12px;
+}
+.expand-kv label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 3px;
+}
+.expand-kv span {
+  font-size: 12px;
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+.expand-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.btn {
+  padding: 5px 14px;
+  border-radius: var(--radius);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+.btn-ghost:hover { border-color: var(--border-a); color: var(--text); background: var(--bg-hover); }
+.btn-primary {
+  background: var(--blue);
+  color: #000;
+  border: none;
+}
+.btn-primary:hover { opacity: 0.85; }
+.btn-danger {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: var(--red);
+}
+.btn-danger:hover { background: rgba(239,68,68,0.2); }
+.btn-yellow {
+  background: rgba(234,179,8,0.12);
+  border: 1px solid rgba(234,179,8,0.25);
+  color: var(--yellow);
+}
+.btn-yellow:hover { background: rgba(234,179,8,0.2); }
+.btn-sm { padding: 3px 10px; font-size: 10.5px; }
+
+/* ── Toolbar ───────────────────────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.toolbar select, .toolbar input {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 0.15s;
+  height: 30px;
+}
+.toolbar select:focus, .toolbar input:focus { border-color: var(--border-a); }
+.toolbar-right { margin-left: auto; display: flex; gap: 8px; }
+
+/* ── Kanban board ──────────────────────────────────────────────────────── */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.kanban-col {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.kanban-col-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-3);
+}
+.kanban-col-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.kanban-col-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+.kanban-cards { padding: 8px; display: flex; flex-direction: column; gap: 8px; min-height: 60px; }
+.case-card {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.case-card:hover { border-color: var(--border-a); }
+.case-ref {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-3);
+  margin-bottom: 4px;
+}
+.case-title {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 8px;
+  word-break: break-word;
+  white-space: normal;
+}
+.case-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-3);
+}
+.case-assigned { margin-left: auto; font-family: var(--font-mono); }
+
+/* ── Intel lookup ──────────────────────────────────────────────────────── */
+.intel-search-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.intel-search-bar input {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  transition: border-color 0.15s;
+}
+.intel-search-bar input:focus { border-color: var(--border-a); }
+.intel-result {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.intel-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-3);
+}
+.intel-ip {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+.intel-verdict {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+.verdict-malicious { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.verdict-clean     { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+.intel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+}
+.intel-block {
+  padding: 16px 20px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.intel-block:nth-child(3n) { border-right: none; }
+.intel-block-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 10px;
+}
+.intel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+.intel-row:last-child { margin-bottom: 0; }
+.intel-key {
+  font-size: 11px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.intel-val {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  text-align: right;
+}
+.feed-tag {
+  display: inline-block;
+  padding: 2px 7px;
+  background: rgba(167,139,250,0.1);
+  border: 1px solid rgba(167,139,250,0.2);
+  color: var(--purple);
+  border-radius: 3px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  margin: 2px 2px 0 0;
+}
+
+/* ── Runs timeline ─────────────────────────────────────────────────────── */
+.run-row-detail { display: none; background: var(--bg-3); padding: 12px 16px; }
+.run-row-detail.open { display: block; }
+.audit-log { display: flex; flex-direction: column; gap: 4px; }
+.audit-entry {
+  display: flex;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 3px 0;
+}
+.audit-stage { color: var(--blue); width: 90px; flex-shrink: 0; }
+.audit-action { color: var(--green); width: 80px; flex-shrink: 0; }
+.audit-detail { color: var(--text-3); }
+.audit-time { margin-left: auto; color: var(--text-3); }
+
+/* ── Empty state ───────────────────────────────────────────────────────── */
+.empty-state {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--text-3);
+}
+.empty-state-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
+.empty-state-msg { font-size: 13px; }
+
+/* ── Toast ─────────────────────────────────────────────────────────────── */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 9999;
+}
+.toast {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--text);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  animation: slideIn 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 240px;
+}
+.toast-ok   { border-left: 3px solid var(--green); }
+.toast-err  { border-left: 3px solid var(--red); }
+@keyframes slideIn { from { transform: translateX(20px); opacity: 0; } }
+
+/* ── Loading overlay ───────────────────────────────────────────────────── */
+.loading-spinner {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#load-indicator { display: none; }
+#load-indicator.visible { display: inline-block; }
+
+/* ── Misc ──────────────────────────────────────────────────────────────── */
+.text-mono { font-family: var(--font-mono); }
+.text-dim  { color: var(--text-2); }
+.text-muted{ color: var(--text-3); }
+.text-right{ text-align: right; }
+.clickable { cursor: pointer; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; display: inline-block; vertical-align: bottom; }
+hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<div id="shell">
+
+  <!-- ── Sidebar ────────────────────────────────────────────────────────── -->
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-name"><span class="brand-dot"></span>SENTINEL</div>
+      <div class="brand-sub">F U S I O N</div>
+    </div>
+    <nav>
+      <div class="nav-section-label">Platform</div>
+      <div class="nav-item active" data-section="overview" onclick="navigate('overview')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Overview
+      </div>
+      <div class="nav-section-label">Detection</div>
+      <div class="nav-item" data-section="alerts" onclick="navigate('alerts')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Alerts
+        <span class="nav-badge" id="nav-alerts-count" style="display:none">0</span>
+      </div>
+      <div class="nav-item" data-section="cases" onclick="navigate('cases')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+        Cases
+      </div>
+      <div class="nav-item" data-section="events" onclick="navigate('events')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Events
+      </div>
+      <div class="nav-section-label">Analysis</div>
+      <div class="nav-item" data-section="hosts" onclick="navigate('hosts')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+        Host Risk
+      </div>
+      <div class="nav-item" data-section="intel" onclick="navigate('intel')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Intel Lookup
+      </div>
+      <div class="nav-section-label">History</div>
+      <div class="nav-item" data-section="runs" onclick="navigate('runs')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Pipeline Runs
+      </div>
+    </nav>
+    <div class="sidebar-footer" id="sidebar-footer">v1.0.0 · sentinel.db</div>
+  </aside>
+
+  <!-- ── Content ────────────────────────────────────────────────────────── -->
+  <div id="content">
+
+    <!-- Topbar -->
+    <header id="topbar">
+      <div class="page-title" id="page-title">Overview</div>
+      <div class="topbar-right">
+        <span id="load-indicator" class="loading-spinner"></span>
+        <span class="live-indicator">
+          <span class="live-dot"></span>LIVE
+        </span>
+        <span class="text-muted text-mono" id="last-sync">–</span>
+        <span class="db-label" id="db-label">sentinel.db</span>
+      </div>
+    </header>
+
+    <!-- Main scroll -->
+    <main id="main">
+
+      <!-- ── OVERVIEW ─────────────────────────────────────────────────── -->
+      <section id="overview" class="section active">
+        <div class="stat-grid" id="stat-grid"></div>
+
+        <div class="overview-grid">
+          <!-- Alert feed -->
+          <div class="panel">
+            <div class="panel-header">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+              <span class="panel-title">Live Alert Feed</span>
+              <span class="panel-count" id="alert-feed-count">–</span>
+            </div>
+            <div style="overflow-x:auto;max-height:300px;overflow-y:auto;">
+              <table class="sf-table" id="alert-feed-table">
+                <thead><tr>
+                  <th>Severity</th><th>Type</th><th>Confidence</th>
+                  <th>Source</th><th>Destination</th><th>MITRE</th><th>Status</th><th>Age</th>
+                </tr></thead>
+                <tbody id="alert-feed-body"><tr><td colspan="8"><div class="empty-state"><div class="loading-spinner"></div></div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Top risk hosts -->
+          <div class="panel">
+            <div class="panel-header">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span class="panel-title">Top Risk Hosts</span>
+            </div>
+            <div id="top-hosts-list"></div>
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="chart-grid">
+          <div class="chart-box">
+            <div class="chart-box-title">Alert Distribution by Type</div>
+            <div class="chart-wrap"><canvas id="chart-type"></canvas></div>
+          </div>
+          <div class="chart-box">
+            <div class="chart-box-title">Alert Status Breakdown</div>
+            <div class="chart-wrap"><canvas id="chart-status"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── ALERTS ───────────────────────────────────────────────────── -->
+      <section id="alerts" class="section">
+        <div class="toolbar">
+          <select id="alert-status-filter" onchange="renderAlerts()">
+            <option value="">All Statuses</option>
+            <option value="open">Open</option>
+            <option value="investigating">Investigating</option>
+            <option value="contained">Contained</option>
+            <option value="closed">Closed</option>
+          </select>
+          <select id="alert-conf-filter" onchange="renderAlerts()">
+            <option value="0">Any Confidence</option>
+            <option value="0.5">≥ 0.50</option>
+            <option value="0.7">≥ 0.70</option>
+            <option value="0.9">≥ 0.90</option>
+          </select>
+          <span class="text-muted text-mono" id="alert-count-label" style="font-size:11px;"></span>
+          <div class="toolbar-right">
+            <button class="btn btn-ghost btn-sm" onclick="loadAll()">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="panel" style="overflow-x:auto;">
+          <table class="sf-table" id="alerts-main-table">
+            <thead><tr>
+              <th></th><th>ID</th><th>Type</th><th>Confidence</th>
+              <th>Source IP</th><th>Destination</th><th>Sev</th>
+              <th>MITRE</th><th>Status</th><th>Created</th>
+            </tr></thead>
+            <tbody id="alerts-main-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── CASES ────────────────────────────────────────────────────── -->
+      <section id="cases" class="section">
+        <div class="toolbar">
+          <span class="text-muted" style="font-size:11px;" id="cases-count-label"></span>
+          <div class="toolbar-right">
+            <button class="btn btn-ghost btn-sm" onclick="loadAll()">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="kanban-board" id="kanban-board"></div>
+      </section>
+
+      <!-- ── EVENTS ───────────────────────────────────────────────────── -->
+      <section id="events" class="section">
+        <div class="toolbar">
+          <select id="evt-type-filter" onchange="renderEvents()">
+            <option value="">All Types</option>
+            <option value="port_scan">Port Scan</option>
+            <option value="auth_failure">Auth Failure</option>
+            <option value="auth_success">Auth Success</option>
+            <option value="lateral_movement">Lateral Movement</option>
+          </select>
+          <input id="evt-ip-filter" placeholder="Filter by IP…" style="width:160px" oninput="renderEvents()">
+          <span class="text-muted text-mono" id="evt-count-label" style="font-size:11px;"></span>
+          <div class="toolbar-right">
+            <button class="btn btn-ghost btn-sm" onclick="loadAll()">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="panel" style="overflow-x:auto;">
+          <table class="sf-table" id="events-table">
+            <thead><tr>
+              <th>Timestamp</th><th>Type</th><th>Source</th>
+              <th>Src IP</th><th>Dst IP</th><th>Sev</th><th>Run ID</th>
+            </tr></thead>
+            <tbody id="events-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── HOST RISK ─────────────────────────────────────────────────── -->
+      <section id="hosts" class="section">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Host Risk Scores</span>
+            <span class="panel-count" id="hosts-count">–</span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="sf-table" id="hosts-table">
+              <thead><tr>
+                <th>Host</th><th>Risk Score</th><th>Label</th>
+                <th>Score Type</th><th>Run ID</th><th>Scored At</th><th></th>
+              </tr></thead>
+              <tbody id="hosts-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── INTEL ─────────────────────────────────────────────────────── -->
+      <section id="intel" class="section">
+        <div class="intel-search-bar">
+          <input id="intel-input" placeholder="Enter IP address (e.g. 185.220.101.45)…"
+                 onkeydown="if(event.key==='Enter')lookupIntel()">
+          <button class="btn btn-primary" onclick="lookupIntel()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            LOOK UP
+          </button>
+        </div>
+        <div id="intel-result-panel"></div>
+      </section>
+
+      <!-- ── RUNS ──────────────────────────────────────────────────────── -->
+      <section id="runs" class="section">
+        <div class="toolbar">
+          <span class="text-muted text-mono" id="runs-count-label" style="font-size:11px;"></span>
+          <div class="toolbar-right">
+            <button class="btn btn-ghost btn-sm" onclick="loadAll()">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="panel" style="overflow-x:auto;">
+          <table class="sf-table" id="runs-table">
+            <thead><tr>
+              <th>Run ID</th><th>Status</th><th>Events</th>
+              <th>Alerts</th><th>Started</th><th>Completed</th><th></th>
+            </tr></thead>
+            <tbody id="runs-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script>
+'use strict';
+
+// ── State ──────────────────────────────────────────────────────────────────
+const S = {
+  section: 'overview',
+  data: { status: null, alerts: [], cases: [], events: [], hosts: [], runs: [] },
+  charts: {},
+  lastSync: null,
+  expandedAlert: null,
+  expandedRun: null,
+};
+
+const PAGE_TITLES = {
+  overview: 'Overview',
+  alerts:   'Detection Alerts',
+  cases:    'Incident Cases',
+  events:   'Normalized Events',
+  hosts:    'Host Risk Scores',
+  intel:    'Threat Intelligence',
+  runs:     'Pipeline Runs',
+};
+
+// ── Navigation ─────────────────────────────────────────────────────────────
+function navigate(section) {
+  S.section = section;
+  document.querySelectorAll('.nav-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.section === section));
+  document.querySelectorAll('.section').forEach(el =>
+    el.classList.toggle('active', el.id === section));
+  document.getElementById('page-title').textContent = PAGE_TITLES[section] || section;
+  render();
+}
+
+// ── API helpers ────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+  return r.json();
+}
+
+// ── Load all data ──────────────────────────────────────────────────────────
+async function loadAll() {
+  document.getElementById('load-indicator').classList.add('visible');
+  try {
+    const [status, alerts, cases, events, hosts, runs] = await Promise.all([
+      api('/api/v1/status'),
+      api('/api/v1/alerts?limit=100'),
+      api('/api/v1/cases'),
+      api('/api/v1/events?limit=200'),
+      api('/api/v1/scores/hosts'),
+      api('/api/v1/pipeline/runs?limit=30'),
+    ]);
+    S.data = { status, alerts, cases, events, hosts, runs };
+    S.lastSync = new Date();
+    render();
+    // Update open alert count badge in sidebar
+    const openCount = alerts.filter(a => a.status === 'open').length;
+    const badge = document.getElementById('nav-alerts-count');
+    badge.textContent = openCount;
+    badge.style.display = openCount ? 'inline' : 'none';
+  } catch (e) {
+    toast('API error: ' + e.message, 'err');
+  } finally {
+    document.getElementById('load-indicator').classList.remove('visible');
+  }
+}
+
+// ── Render dispatcher ──────────────────────────────────────────────────────
+function render() {
+  updateTopbar();
+  if (S.section === 'overview') renderOverview();
+  else if (S.section === 'alerts') renderAlerts();
+  else if (S.section === 'cases') renderCases();
+  else if (S.section === 'events') renderEvents();
+  else if (S.section === 'hosts') renderHosts();
+  else if (S.section === 'runs') renderRuns();
+}
+
+function updateTopbar() {
+  const el = document.getElementById('last-sync');
+  if (S.lastSync) el.textContent = 'Updated ' + S.lastSync.toLocaleTimeString();
+  if (S.data.status) {
+    const db = S.data.status.schema_version !== undefined
+      ? (document.getElementById('db-label').textContent = window.__DB || 'sentinel.db')
+      : null;
+  }
+}
+
+// ── Overview ───────────────────────────────────────────────────────────────
+function renderOverview() {
+  const st = S.data.status;
+  if (!st) return;
+
+  // Stat cards
+  const statCards = [
+    { label: 'Events',  value: st.total_events,  color: '#38bdf8', icon: 'M22 12 18 12 15 21 9 3 6 12 2 12' },
+    { label: 'Alerts',  value: st.total_alerts,  color: '#ef4444', icon: 'M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z' },
+    { label: 'Cases',   value: st.total_cases,   color: '#eab308', icon: 'M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z' },
+    { label: 'Runs',    value: st.total_runs,    color: '#22c55e', icon: 'M5 3l14 9-14 9V3z' },
+  ];
+  document.getElementById('stat-grid').innerHTML = statCards.map(c => `
+    <div class="stat-card">
+      <div class="stat-card-accent" style="background:linear-gradient(90deg,transparent,${c.color},transparent)"></div>
+      <div class="stat-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${c.color}" stroke-width="1.5">
+          <path d="${c.icon}"/>
+        </svg>
+      </div>
+      <div class="stat-value">${c.value.toLocaleString()}</div>
+      <div class="stat-label">${c.label}</div>
+    </div>
+  `).join('');
+
+  // Alert feed
+  const alerts = S.data.alerts.slice(0, 15);
+  document.getElementById('alert-feed-count').textContent = S.data.alerts.length + ' total';
+  document.getElementById('alert-feed-body').innerHTML = alerts.length
+    ? alerts.map(a => `
+      <tr class="sev-${scoreToSev(a.severity)}" style="cursor:pointer" onclick="navigate('alerts')">
+        <td>${sevBadge(scoreToSev(a.severity))}</td>
+        <td><span class="truncate" style="max-width:140px;">${a.alert_type}</span></td>
+        <td>${confBar(a.confidence)}</td>
+        <td><code class="ip" onclick="event.stopPropagation();gotoIntel('${a.src_ip}')">${a.src_ip||'–'}</code></td>
+        <td><code class="ip">${a.dst_ip||'–'}</code></td>
+        <td>${mitreBadge(a.mitre_tactic)}</td>
+        <td>${statusPill(a.status)}</td>
+        <td class="text-muted text-mono" style="font-size:11px">${timeAgo(a.created_at)}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="8"><div class="empty-state"><div class="empty-state-icon">⚡</div><div class="empty-state-msg">No alerts — run the pipeline to detect threats</div></div></td></tr>';
+
+  // Top risk hosts
+  const hosts = st.top_risk_hosts || [];
+  document.getElementById('top-hosts-list').innerHTML = hosts.length
+    ? hosts.map(h => `
+      <div class="host-item" onclick="gotoHost('${h.target}')">
+        <div class="host-ip">${h.target}</div>
+        <div class="host-meta">
+          ${scoreBar(h.score, 10)}
+          ${sevBadge(h.label)}
+          <span class="text-muted" style="font-size:10px;margin-left:auto">${timeAgo(h.scored_at)}</span>
+        </div>
+      </div>`).join('')
+    : '<div class="empty-state" style="padding:24px"><div class="empty-state-msg">No scored hosts yet</div></div>';
+
+  // Charts
+  buildTypeChart(st.alerts_by_type || {});
+  buildStatusChart(st.alerts_by_status || {});
+}
+
+function buildTypeChart(byType) {
+  const ctx = document.getElementById('chart-type');
+  const labels = Object.keys(byType);
+  const values = Object.values(byType);
+  if (S.charts.type) S.charts.type.destroy();
+  if (!labels.length) { ctx.style.display='none'; return; }
+  ctx.style.display = '';
+  S.charts.type = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values,
+        backgroundColor: ['#ef4444','#f97316','#eab308','#22c55e','#38bdf8','#a78bfa','#ec4899'],
+        borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { color: '#64748b', font: { size: 10 }, boxWidth: 10, padding: 8 } } },
+      cutout: '65%',
+    }
+  });
+}
+
+function buildStatusChart(byStatus) {
+  const ctx = document.getElementById('chart-status');
+  const colorMap = { open:'#ef4444', investigating:'#eab308', contained:'#38bdf8', closed:'#64748b' };
+  const labels = Object.keys(byStatus);
+  const values = Object.values(byStatus);
+  if (S.charts.status) S.charts.status.destroy();
+  if (!labels.length) { ctx.style.display='none'; return; }
+  ctx.style.display = '';
+  S.charts.status = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels.map(l => l.toUpperCase()),
+      datasets: [{ data: values,
+        backgroundColor: labels.map(l => colorMap[l] || '#64748b'),
+        borderRadius: 3, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color:'rgba(255,255,255,0.04)' }, ticks: { color:'#64748b', font:{size:10} } },
+        y: { grid: { display:false }, ticks: { color:'#64748b', font:{size:10} } },
+      }
+    }
+  });
+}
+
+// ── Alerts section ─────────────────────────────────────────────────────────
+function renderAlerts() {
+  const statusFilter = document.getElementById('alert-status-filter').value;
+  const confFilter = parseFloat(document.getElementById('alert-conf-filter').value || '0');
+  let alerts = S.data.alerts
+    .filter(a => !statusFilter || a.status === statusFilter)
+    .filter(a => a.confidence >= confFilter);
+
+  document.getElementById('alert-count-label').textContent =
+    alerts.length + ' alert' + (alerts.length !== 1 ? 's' : '');
+
+  document.getElementById('alerts-main-body').innerHTML = alerts.length
+    ? alerts.map((a, i) => `
+      <tr class="sev-${scoreToSev(a.severity)} clickable" id="alert-row-${a.id}"
+          onclick="toggleAlertExpand(${a.id})">
+        <td>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               style="transition:transform 0.2s;transform:rotate(${S.expandedAlert===a.id?'90':'0'}deg)">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </td>
+        <td class="text-mono text-muted" style="font-size:11px">${a.id}</td>
+        <td><span class="truncate" style="max-width:160px;font-size:12px">${a.alert_type}</span></td>
+        <td>${confBar(a.confidence)}</td>
+        <td><code class="ip" onclick="event.stopPropagation();gotoIntel('${a.src_ip}')">${a.src_ip||'–'}</code></td>
+        <td><code class="ip">${a.dst_ip||'–'}</code></td>
+        <td>${sevBadge(scoreToSev(a.severity))}</td>
+        <td>${mitreBadge(a.mitre_tactic)}</td>
+        <td>${statusPill(a.status)}</td>
+        <td class="text-muted text-mono" style="font-size:11px">${fmtDate(a.created_at)}</td>
+      </tr>
+      <tr id="alert-expand-${a.id}" style="display:none">
+        <td colspan="10" style="padding:0">
+          <div class="alert-expand" id="alert-expand-inner-${a.id}">
+            <div class="alert-expand-grid">
+              <div class="expand-kv"><label>Alert Hash</label><span>${a.alert_hash}</span></div>
+              <div class="expand-kv"><label>Run ID</label><span>${a.run_id}</span></div>
+              <div class="expand-kv"><label>MITRE Tactic</label><span>${a.mitre_tactic||'–'}</span></div>
+              <div class="expand-kv"><label>Confidence</label><span>${a.confidence.toFixed(4)}</span></div>
+              <div class="expand-kv"><label>Updated At</label><span>${a.updated_at}</span></div>
+              <div class="expand-kv"><label>Severity</label><span>${a.severity}</span></div>
+            </div>
+            <div class="expand-actions">
+              <span class="text-muted" style="font-size:11px;align-self:center;margin-right:4px">Update Status:</span>
+              ${['investigating','contained','closed'].map(s =>
+                `<button class="btn btn-ghost btn-sm" onclick="updateAlertStatus(${a.id},'${s}')">${s}</button>`
+              ).join('')}
+              <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="gotoIntel('${a.src_ip}')">
+                🔍 Intel: ${a.src_ip}
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="10"><div class="empty-state"><div class="empty-state-icon">✓</div><div class="empty-state-msg">No alerts match the current filter</div></div></td></tr>';
+}
+
+function toggleAlertExpand(id) {
+  const prev = S.expandedAlert;
+  S.expandedAlert = prev === id ? null : id;
+  if (prev !== null) {
+    const prevRow = document.getElementById('alert-expand-' + prev);
+    if (prevRow) prevRow.style.display = 'none';
+  }
+  const row = document.getElementById('alert-expand-' + id);
+  if (row) row.style.display = S.expandedAlert === id ? 'table-row' : 'none';
+}
+
+async function updateAlertStatus(id, status) {
+  try {
+    await api(`/api/v1/alerts/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    toast(`Alert ${id} → ${status}`, 'ok');
+    await loadAll();
+  } catch (e) { toast('Update failed: ' + e.message, 'err'); }
+}
+
+// ── Cases ──────────────────────────────────────────────────────────────────
+function renderCases() {
+  const cases = S.data.cases;
+  document.getElementById('cases-count-label').textContent =
+    cases.length + ' case' + (cases.length !== 1 ? 's' : '');
+
+  const cols = ['open','investigating','contained','closed'];
+  const colColors = { open:'#ef4444', investigating:'#eab308', contained:'#38bdf8', closed:'#64748b' };
+
+  document.getElementById('kanban-board').innerHTML = cols.map(col => {
+    const colCases = cases.filter(c => c.status === col);
+    return `
+      <div class="kanban-col">
+        <div class="kanban-col-header">
+          <span style="width:8px;height:8px;border-radius:50%;background:${colColors[col]};flex-shrink:0"></span>
+          <span class="kanban-col-title" style="color:${colColors[col]}">${col.toUpperCase()}</span>
+          <span class="kanban-col-count">${colCases.length}</span>
+        </div>
+        <div class="kanban-cards">
+          ${colCases.length ? colCases.map(c => `
+            <div class="case-card">
+              <div class="case-ref">${c.case_ref}</div>
+              <div class="case-title">${c.title}</div>
+              <div class="case-footer">
+                ${sevBadge(c.severity)}
+                <span class="case-assigned text-mono text-muted" title="${c.assigned_to}">${
+                  c.assigned_to ? c.assigned_to.split('@')[0] : 'unassigned'
+                }</span>
+              </div>
+            </div>`).join('')
+          : '<div style="padding:12px;color:var(--text-3);font-size:11px;text-align:center">–</div>'}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Events ─────────────────────────────────────────────────────────────────
+function renderEvents() {
+  const typeFilter = document.getElementById('evt-type-filter').value;
+  const ipFilter   = document.getElementById('evt-ip-filter').value.trim().toLowerCase();
+  const evts = S.data.events
+    .filter(e => !typeFilter || e.event_type === typeFilter)
+    .filter(e => !ipFilter || e.src_ip.includes(ipFilter) || e.dst_ip.includes(ipFilter));
+
+  document.getElementById('evt-count-label').textContent =
+    evts.length + ' event' + (evts.length !== 1 ? 's' : '');
+
+  const srcTypeColors = { nra:'#38bdf8', winlog:'#a78bfa', mock:'#eab308' };
+  document.getElementById('events-body').innerHTML = evts.length
+    ? evts.map(e => `
+      <tr>
+        <td class="text-mono text-muted" style="font-size:11px">${e.timestamp?.slice(0,19)}</td>
+        <td style="font-size:12px">${e.event_type}</td>
+        <td>
+          <span style="font-size:10px;color:${srcTypeColors[e.source_type]||'#64748b'};
+            background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:3px;font-family:var(--font-mono)">
+            ${e.source_type}
+          </span>
+        </td>
+        <td><code class="ip" onclick="gotoIntel('${e.src_ip}')">${e.src_ip}</code></td>
+        <td><code class="ip">${e.dst_ip}</code></td>
+        <td>${sevBadge(scoreToSev(e.severity))}</td>
+        <td class="text-mono text-muted" style="font-size:10px">${e.run_id}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-msg">No events match the filter</div></div></td></tr>';
+}
+
+// ── Hosts ──────────────────────────────────────────────────────────────────
+function renderHosts() {
+  const hosts = S.data.hosts;
+  document.getElementById('hosts-count').textContent = hosts.length;
+  document.getElementById('hosts-body').innerHTML = hosts.length
+    ? hosts.map(h => `
+      <tr>
+        <td><code class="ip" onclick="gotoIntel('${h.target}')">${h.target}</code></td>
+        <td style="min-width:160px">${scoreBar(h.score, 10)}</td>
+        <td>${sevBadge(h.label)}</td>
+        <td class="text-mono text-muted" style="font-size:11px">${h.score_type}</td>
+        <td class="text-mono text-muted" style="font-size:10px">${h.run_id}</td>
+        <td class="text-mono text-muted" style="font-size:11px">${h.scored_at?.slice(0,19)}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="gotoIntel('${h.target}')">🔍 Intel</button>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-msg">No host scores yet</div></div></td></tr>';
+}
+
+// ── Intel ──────────────────────────────────────────────────────────────────
+async function lookupIntel() {
+  const ip = document.getElementById('intel-input').value.trim();
+  if (!ip) return;
+  const panel = document.getElementById('intel-result-panel');
+  panel.innerHTML = '<div class="empty-state"><div class="loading-spinner"></div></div>';
+  try {
+    const d = await api(`/api/v1/intel/ip/${encodeURIComponent(ip)}`);
+    const rep = d.reputation, geo = d.geo, thr = d.threats;
+    const malicious = rep.is_malicious;
+    const feeds = (thr.feed_hits || []);
+    panel.innerHTML = `
+      <div class="intel-result">
+        <div class="intel-header">
+          <span class="intel-ip">${ip}</span>
+          <span class="intel-verdict ${malicious?'verdict-malicious':'verdict-clean'}">
+            ${malicious ? '⚠ MALICIOUS' : '✓ CLEAN'}
+          </span>
+          ${geo.is_tor ? '<span class="badge badge-high">TOR EXIT NODE</span>' : ''}
+          ${geo.high_risk_country ? '<span class="badge badge-critical">HIGH-RISK COUNTRY</span>' : ''}
+        </div>
+        <div class="intel-grid">
+          <div class="intel-block">
+            <div class="intel-block-title">Reputation</div>
+            <div class="intel-row">
+              <span class="intel-key">Reputation Score</span>
+              <span class="intel-val">${confBar(rep.reputation_score)}</span>
+            </div>
+            <div class="intel-row">
+              <span class="intel-key">Report Count</span>
+              <span class="intel-val">${rep.report_count ?? 0}</span>
+            </div>
+            <div class="intel-row">
+              <span class="intel-key">Categories</span>
+              <span class="intel-val">${(rep.categories||[]).join(', ') || '–'}</span>
+            </div>
+            <div class="intel-row">
+              <span class="intel-key">Source</span>
+              <span class="intel-val">${rep.source || '–'}</span>
+            </div>
+          </div>
+          <div class="intel-block">
+            <div class="intel-block-title">Geolocation</div>
+            <div class="intel-row"><span class="intel-key">Country</span><span class="intel-val">${geo.country} (${geo.country_code})</span></div>
+            <div class="intel-row"><span class="intel-key">City</span><span class="intel-val">${geo.city || '–'}</span></div>
+            <div class="intel-row"><span class="intel-key">ASN</span><span class="intel-val">${geo.asn || '–'}</span></div>
+            <div class="intel-row"><span class="intel-key">Organization</span><span class="intel-val">${geo.org || '–'}</span></div>
+            <div class="intel-row"><span class="intel-key">TOR Exit</span>
+              <span class="intel-val" style="color:${geo.is_tor?'var(--yellow)':'var(--green)'}">${geo.is_tor?'Yes':'No'}</span></div>
+          </div>
+          <div class="intel-block">
+            <div class="intel-block-title">Threat Feeds</div>
+            <div class="intel-row"><span class="intel-key">Feed Confidence</span><span class="intel-val">${confBar(thr.confidence||0)}</span></div>
+            <div class="intel-row"><span class="intel-key">First Seen</span><span class="intel-val">${thr.first_seen||'–'}</span></div>
+            <div class="intel-row"><span class="intel-key">Last Seen</span><span class="intel-val">${thr.last_seen||'–'}</span></div>
+            <div style="margin-top:8px">${feeds.map(f=>`<span class="feed-tag">${f}</span>`).join('') || '<span class="text-muted">No feed hits</span>'}</div>
+          </div>
+        </div>
+      </div>`;
+  } catch(e) {
+    panel.innerHTML = `<div class="empty-state"><div class="empty-state-msg" style="color:var(--red)">Error: ${e.message}</div></div>`;
+  }
+}
+
+function gotoIntel(ip) {
+  document.getElementById('intel-input').value = ip;
+  navigate('intel');
+  lookupIntel();
+}
+
+// ── Runs ───────────────────────────────────────────────────────────────────
+function renderRuns() {
+  const runs = S.data.runs;
+  document.getElementById('runs-count-label').textContent =
+    runs.length + ' run' + (runs.length !== 1 ? 's' : '');
+
+  document.getElementById('runs-body').innerHTML = runs.length
+    ? runs.map(r => `
+      <tr class="clickable" onclick="toggleRunExpand('${r.run_id}')">
+        <td class="text-mono" style="font-size:12px;color:var(--blue)">${r.run_id}</td>
+        <td>${statusPill(r.status)}</td>
+        <td class="text-mono" style="font-size:12px">${r.event_count.toLocaleString()}</td>
+        <td class="text-mono" style="font-size:12px">${r.alert_count.toLocaleString()}</td>
+        <td class="text-mono text-muted" style="font-size:11px">${r.started_at?.slice(0,19)}</td>
+        <td class="text-mono text-muted" style="font-size:11px">${r.completed_at?.slice(0,19)||'–'}</td>
+        <td>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+               style="transition:transform 0.2s;transform:rotate(${S.expandedRun===r.run_id?90:0}deg)">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </td>
+      </tr>
+      <tr id="run-expand-${r.run_id.replace(/[^a-z0-9]/gi,'-')}" style="display:none">
+        <td colspan="7" style="padding:0">
+          <div class="run-row-detail" id="run-detail-${r.run_id.replace(/[^a-z0-9]/gi,'-')}"></div>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="7"><div class="empty-state"><div class="empty-state-msg">No pipeline runs yet</div></div></td></tr>';
+}
+
+async function toggleRunExpand(runId) {
+  const safeId = runId.replace(/[^a-z0-9]/gi,'-');
+  const prev = S.expandedRun;
+
+  if (prev) {
+    const prevSafe = prev.replace(/[^a-z0-9]/gi,'-');
+    const el = document.getElementById('run-expand-' + prevSafe);
+    if (el) el.style.display = 'none';
+  }
+  S.expandedRun = prev === runId ? null : runId;
+  if (!S.expandedRun) return;
+
+  const row = document.getElementById('run-expand-' + safeId);
+  const detail = document.getElementById('run-detail-' + safeId);
+  if (!row || !detail) return;
+  row.style.display = 'table-row';
+  detail.innerHTML = '<div style="padding:12px"><div class="loading-spinner"></div></div>';
+  detail.classList.add('open');
+
+  try {
+    const run = await api(`/api/v1/pipeline/runs/${encodeURIComponent(runId)}`);
+    // Fetch audit log via events count
+    detail.innerHTML = `
+      <div class="audit-log">
+        <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px">
+          Audit Log — ${runId}
+        </div>
+        <div class="audit-entry">
+          <span class="audit-stage">run_id</span>
+          <span class="audit-action"></span>
+          <span class="audit-detail text-mono" style="color:var(--blue)">${run.run_id}</span>
+        </div>
+        <div class="audit-entry">
+          <span class="audit-stage">event_count</span>
+          <span class="audit-action"></span>
+          <span class="audit-detail">${run.event_count}</span>
+        </div>
+        <div class="audit-entry">
+          <span class="audit-stage">alert_count</span>
+          <span class="audit-action"></span>
+          <span class="audit-detail">${run.alert_count}</span>
+        </div>
+        <div class="audit-entry">
+          <span class="audit-stage">status</span>
+          <span class="audit-action"></span>
+          <span class="audit-detail">${statusPill(run.status)}</span>
+        </div>
+        <div class="audit-entry">
+          <span class="audit-stage">started_at</span>
+          <span class="audit-action"></span>
+          <span class="audit-detail">${run.started_at}</span>
+        </div>
+        <div class="audit-entry">
+          <span class="audit-stage">completed_at</span>
+          <span class="audit-action"></span>
+          <span class="audit-detail">${run.completed_at||'–'}</span>
+        </div>
+      </div>`;
+  } catch(e) {
+    detail.innerHTML = `<div style="color:var(--red);font-size:12px;padding:8px">Error: ${e.message}</div>`;
+  }
+}
+
+function gotoHost(ip) {
+  navigate('hosts');
+}
+
+// ── Format helpers ─────────────────────────────────────────────────────────
+function sevBadge(sev) {
+  const s = (sev||'low').toLowerCase();
+  return `<span class="badge badge-${s}">${s}</span>`;
+}
+
+function statusPill(status) {
+  const s = (status||'').toLowerCase().replace(/\s/g,'-');
+  return `<span class="status-pill status-${s}">${status}</span>`;
+}
+
+function mitreBadge(tactic) {
+  if (!tactic) return '<span class="text-muted">–</span>';
+  return `<span class="mitre-badge">${tactic}</span>`;
+}
+
+function confBar(v) {
+  const pct = Math.round((v||0) * 100);
+  return `<div class="conf-wrap">
+    <div class="conf-track"><div class="conf-fill" style="width:${pct}%"></div></div>
+    <span class="conf-val">${(v||0).toFixed(2)}</span>
+  </div>`;
+}
+
+function scoreBar(score, max) {
+  const pct = Math.round(((score||0)/max)*100);
+  const sev = scoreToSev(score||0);
+  const colors = { critical:'#ef4444', high:'#f97316', medium:'#eab308', low:'#22c55e' };
+  return `<div class="score-bar-wrap">
+    <div class="score-bar-track">
+      <div class="score-bar-fill" style="width:${pct}%;background:${colors[sev]||'#64748b'}"></div>
+    </div>
+    <span class="score-val" style="color:${colors[sev]||'#64748b'}">${(score||0).toFixed(1)}</span>
+  </div>`;
+}
+
+function scoreToSev(score) {
+  if (score >= 8) return 'critical';
+  if (score >= 6) return 'high';
+  if (score >= 3) return 'medium';
+  return 'low';
+}
+
+function fmtDate(iso) {
+  if (!iso) return '–';
+  try { return new Date(iso).toLocaleString(); } catch { return iso; }
+}
+
+function timeAgo(iso) {
+  if (!iso) return '–';
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1)  return 'just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+
+function copyIP(ip) {
+  navigator.clipboard?.writeText(ip).then(() => toast('Copied: ' + ip, 'ok'));
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function toast(msg, type = 'ok') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `<span>${type === 'ok' ? '✓' : '✕'}</span> ${msg}`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+(function init() {
+  // Set DB label from window location hints or default
+  const dbLabel = document.getElementById('db-label');
+  window.__DB = 'sentinel.db';
+  dbLabel.textContent = window.__DB;
+  document.getElementById('sidebar-footer').textContent = 'v1.0.0 · ' + window.__DB;
+
+  loadAll();
+  setInterval(loadAll, 30000);
+})();
+</script>
+</body>
+</html>

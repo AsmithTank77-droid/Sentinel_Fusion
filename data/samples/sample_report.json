@@ -1,0 +1,691 @@
+{
+  "report_type": "sentinel_fusion_soc_report",
+  "generated_at": "2026-05-11T20:21:06Z",
+  "summary": {
+    "total_events": 18,
+    "total_alerts": 26,
+    "unique_alert_types": [
+      "correlated_attack_chain",
+      "brute_force_detected",
+      "lateral_movement_detected",
+      "malicious_ip_activity",
+      "tor_exit_node_activity",
+      "high_risk_country_access",
+      "off_hours_access",
+      "threat_feed_match",
+      "WINLOG-005",
+      "WINLOG-006",
+      "WINLOG-009"
+    ],
+    "expansion_label": "significant",
+    "expansion_score": 7.5,
+    "highest_host_risk": {
+      "host": "10.0.0.10",
+      "score": 9.77,
+      "label": "critical"
+    },
+    "lateral_movement_hops": 1,
+    "mitre_tactics": [
+      "TA0001 - Initial Access",
+      "TA0003 - Persistence",
+      "TA0004 - Privilege Escalation",
+      "TA0005 - Defense Evasion",
+      "TA0006 - Credential Access",
+      "TA0008 - Lateral Movement",
+      "TA0043 - Reconnaissance"
+    ]
+  },
+  "alerts": [
+    {
+      "alert_type": "correlated_attack_chain",
+      "confidence": 0.99,
+      "src_ip": "185.220.101.45",
+      "event_count": 10,
+      "event_types": [
+        "authentication_failure",
+        "authentication_success",
+        "privileged_logon"
+      ],
+      "dst_ips": [
+        "10.0.0.10"
+      ],
+      "timestamps": [
+        "2026-05-11T03:01:00Z",
+        "2026-05-11T03:09:30Z"
+      ],
+      "max_severity": 5,
+      "mitre_tactics": [
+        "TA0006 - Credential Access",
+        "TA0001 - Initial Access"
+      ],
+      "enrichment_summary": {
+        "src_reputation": {
+          "is_malicious": true,
+          "reputation_score": 0.97,
+          "categories": [
+            "tor_exit",
+            "ssh_brute_force",
+            "scanner"
+          ]
+        },
+        "src_geo": {
+          "country": "Russia",
+          "is_tor": true,
+          "high_risk_country": true
+        },
+        "src_threat_feeds": [
+          "tor-exit-nodes",
+          "ssh-brute-force-ips",
+          "shodan-scanner"
+        ]
+      }
+    },
+    {
+      "alert_type": "correlated_attack_chain",
+      "confidence": 0.9,
+      "src_ip": "10.0.0.10",
+      "event_count": 5,
+      "event_types": [
+        "domain_group_member_added",
+        "scheduled_task_created",
+        "explicit_credential_logon",
+        "authentication_success",
+        "winlog_event_1102"
+      ],
+      "dst_ips": [
+        "10.0.0.10",
+        "10.0.0.11"
+      ],
+      "timestamps": [
+        "2026-05-11T03:12:00Z",
+        "2026-05-11T03:21:00Z"
+      ],
+      "max_severity": 8,
+      "mitre_tactics": [
+        "TA0006 - Credential Access",
+        "TA0001 - Initial Access"
+      ],
+      "enrichment_summary": {
+        "src_reputation": {
+          "is_malicious": false,
+          "reputation_score": 0.0,
+          "categories": [
+            "internal"
+          ]
+        },
+        "src_geo": {
+          "country": "Internal",
+          "is_tor": false,
+          "high_risk_country": false
+        }
+      }
+    },
+    {
+      "alert_type": "brute_force_detected",
+      "confidence": 0.847,
+      "src_ip": "185.220.101.45",
+      "dst_ip": "10.0.0.10",
+      "failure_count": 6,
+      "window_start": "2026-05-11T03:01:00Z",
+      "window_end": "2026-05-11T03:06:00Z",
+      "event_type": "authentication_failure",
+      "mitre_tactic": "TA0006 - Credential Access",
+      "mitre_technique": "T1110 - Brute Force",
+      "severity": 7
+    },
+    {
+      "alert_type": "lateral_movement_detected",
+      "confidence": 0.75,
+      "initial_src_ip": "185.220.101.45",
+      "pivot_host": "10.0.0.10",
+      "lateral_target": "10.0.0.11",
+      "initial_login_ts": "2026-05-11T03:09:00Z",
+      "lateral_event_ts": "2026-05-11T03:17:00Z",
+      "mitre_tactic": "TA0008 - Lateral Movement",
+      "mitre_technique": "T1021 - Remote Services",
+      "severity": 7
+    },
+    {
+      "alert_type": "malicious_ip_activity",
+      "confidence": 0.894,
+      "event_type": "authentication_failure",
+      "src_ip": "185.220.101.45",
+      "dst_ip": "10.0.0.10",
+      "timestamp": "2026-05-11T03:01:00Z",
+      "severity": 6,
+      "mitre_tactic": "TA0043 - Reconnaissance",
+      "reason": "Source IP '185.220.101.45' is flagged malicious (score=0.97, categories=['tor_exit', 'ssh_brute_force', 'scanner'])"
+    },
+    {
+      "alert_type": "tor_exit_node_activity",
+      "confidence": 0.85,
+      "event_type": "authentication_failure",
+      "src_ip": "185.220.101.45",
+      "dst_ip": "10.0.0.10",
+      "timestamp": "2026-05-11T03:01:00Z",
+      "severity": 6,
+      "mitre_tactic": "TA0005 - Defense Evasion",
+      "reason": "Source IP '185.220.101.45' is a TOR exit node"
+    },
+    {
+      "alert_type": "high_risk_country_access",
+      "confidence": 0.65,
+      "event_type": "authentication_failure",
+      "src_ip": "185.220.101.45",
+      "dst_ip": "10.0.0.10",
+      "timestamp": "2026-05-11T03:01:00Z",
+      "severity": 5,
+      "mitre_tactic": "TA0043 - Reconnaissance",
+      "reason": "Traffic from high-risk country: Russia"
+    },
+    {
+      "alert_type": "off_hours_access",
+      "confidence": 0.55,
+      "event_type": "authentication_failure",
+      "src_ip": "185.220.101.45",
+      "dst_ip": "10.0.0.10",
+      "timestamp": "2026-05-11T03:01:00Z",
+      "severity": 5,
+      "mitre_tactic": "TA0003 - Persistence",
+      "reason": "Activity at off-hours UTC hour 03:xx"
+    },
+    {
+      "alert_type": "threat_feed_match",
+      "confidence": 0.99,
+      "event_type": "authentication_failure",
+      "src_ip": "185.220.101.45",
+      "dst_ip": "10.0.0.10",
+      "timestamp": "2026-05-11T03:01:00Z",
+      "severity": 6,
+      "mitre_tactic": "TA0043 - Reconnaissance",
+      "reason": "Matches threat feeds: ['tor-exit-nodes', 'ssh-brute-force-ips', 'shodan-scanner']"
+    },
+    {
+      "alert_type": "off_hours_access",
+      "confidence": 0.55,
+      "event_type": "domain_group_member_added",
+      "src_ip": "10.0.0.10",
+      "dst_ip": "10.0.0.10",
+      "timestamp": "2026-05-11T03:12:00Z",
+      "severity": 5,
+      "mitre_tactic": "TA0003 - Persistence",
+      "reason": "Activity at off-hours UTC hour 03:xx"
+    },
+    {
+      "alert_type": "WINLOG-005",
+      "title": "Privilege Escalation \u2014 Admin Privileges After Remote Logon",
+      "confidence": 0.85,
+      "mitre_technique": "T1078.002",
+      "mitre_tactic": "TA0004 - Privilege Escalation",
+      "description": "'Administrator' received special privileges 30s after remote logon from 185.220.101.45",
+      "first_seen": "2026-05-11T03:09:00Z",
+      "last_seen": "2026-05-11T03:09:30Z",
+      "severity": 8,
+      "context": {
+        "user": "Administrator",
+        "src_ip": "185.220.101.45",
+        "logon_type": 10
+      },
+      "source": "winlog_rules"
+    },
+    {
+      "alert_type": "WINLOG-006",
+      "title": "Audit Log Cleared",
+      "confidence": 0.99,
+      "mitre_technique": "T1070.001",
+      "mitre_tactic": "TA0005 - Defense Evasion",
+      "description": "Windows audit log cleared by 'Administrator' at 2026-05-11T03:21:00Z",
+      "first_seen": "2026-05-11T03:21:00Z",
+      "last_seen": "2026-05-11T03:21:00Z",
+      "severity": 10,
+      "context": {
+        "actor": "Administrator"
+      },
+      "source": "winlog_rules"
+    },
+    {
+      "alert_type": "WINLOG-009",
+      "title": "Scheduled Task Created",
+      "confidence": 0.85,
+      "mitre_technique": "T1053.005",
+      "mitre_tactic": "TA0003 - Persistence",
+      "description": "Scheduled task 'WindowsUpdateHelper' created by 'Administrator' at 2026-05-11T03:14:00Z",
+      "first_seen": "2026-05-11T03:14:00Z",
+      "last_seen": "2026-05-11T03:14:00Z",
+      "severity": 8,
+      "context": {
+        "task_name": "WindowsUpdateHelper",
+        "actor": "Administrator",
+        "action": "created"
+      },
+      "source": "winlog_rules"
+    }
+  ],
+  "scores": {
+    "host_risk": {
+      "10.0.0.10": {
+        "risk_score": 9.77,
+        "risk_label": "critical",
+        "event_count": 13,
+        "max_event_severity": 8,
+        "alert_count": 8,
+        "alert_types": [
+          "brute_force_detected",
+          "lateral_movement_detected",
+          "malicious_ip_activity",
+          "tor_exit_node_activity",
+          "high_risk_country_access",
+          "off_hours_access",
+          "threat_feed_match"
+        ],
+        "factors": [
+          "avg event severity 4.8",
+          "8 alert(s) targeting this host (+3.0)",
+          "malicious source IP observed"
+        ]
+      },
+      "10.0.0.11": {
+        "risk_score": 4.0,
+        "risk_label": "medium",
+        "event_count": 2,
+        "max_event_severity": 5,
+        "alert_count": 1,
+        "alert_types": [
+          "lateral_movement_detected"
+        ],
+        "factors": [
+          "avg event severity 3.5",
+          "1 alert(s) targeting this host (+0.5)"
+        ]
+      },
+      "10.0.0.20": {
+        "risk_score": 5.2,
+        "risk_label": "medium",
+        "nra_composite_score": 52,
+        "event_count": 1,
+        "max_event_severity": 5,
+        "alert_count": 0,
+        "alert_types": [],
+        "factors": [
+          "Service risk: 38/40 (3 open port(s))",
+          "Exposure risk: 9/25 (3 open, 1 non-standard)",
+          "Attack surface: 5/20 (0 combo pts, 5 concentration pts)"
+        ],
+        "nra_breakdown": {
+          "service_risk": 38,
+          "exposure_risk": 9,
+          "attack_surface": 5,
+          "threat_context": 0
+        }
+      }
+    },
+    "asset_risk": {
+      "10.0.0.10": {
+        "exposure_score": 10.0,
+        "exposure_label": "critical",
+        "high_risk_event_count": 4,
+        "event_types_observed": [
+          "port_scan",
+          "authentication_failure",
+          "authentication_success",
+          "privileged_logon",
+          "domain_group_member_added",
+          "scheduled_task_created",
+          "winlog_event_1102"
+        ],
+        "alert_count": 8,
+        "is_lateral_target": false,
+        "factors": [
+          "4 high-exposure event type(s): ['authentication_success', 'privileged_logon', 'domain_group_member_added', 'scheduled_task_created']",
+          "2 medium-exposure event type(s)",
+          "8 alert(s) referencing this asset"
+        ]
+      },
+      "10.0.0.20": {
+        "exposure_score": 1.0,
+        "exposure_label": "low",
+        "high_risk_event_count": 0,
+        "event_types_observed": [
+          "port_scan"
+        ],
+        "alert_count": 0,
+        "is_lateral_target": false,
+        "factors": [
+          "1 medium-exposure event type(s)"
+        ]
+      },
+      "10.0.0.11": {
+        "exposure_score": 7.75,
+        "exposure_label": "high",
+        "high_risk_event_count": 2,
+        "event_types_observed": [
+          "port_scan",
+          "explicit_credential_logon",
+          "authentication_success"
+        ],
+        "alert_count": 1,
+        "is_lateral_target": true,
+        "factors": [
+          "2 high-exposure event type(s): ['explicit_credential_logon', 'authentication_success']",
+          "1 medium-exposure event type(s)",
+          "1 alert(s) referencing this asset",
+          "identified as lateral movement target"
+        ]
+      }
+    },
+    "attack_surface": {
+      "expansion_score": 7.5,
+      "expansion_label": "significant",
+      "unique_external_sources": 1,
+      "unique_internal_targets": 3,
+      "unique_attack_techniques": 8,
+      "lateral_movement_hops": 1,
+      "alert_type_breakdown": {
+        "correlated_attack_chain": 2,
+        "brute_force_detected": 1,
+        "lateral_movement_detected": 1,
+        "malicious_ip_activity": 1,
+        "tor_exit_node_activity": 1,
+        "high_risk_country_access": 1,
+        "off_hours_access": 2,
+        "threat_feed_match": 1,
+        "WINLOG-005": 1,
+        "WINLOG-006": 1,
+        "WINLOG-009": 1
+      },
+      "mitre_tactics_observed": [
+        "TA0001 - Initial Access",
+        "TA0003 - Persistence",
+        "TA0004 - Privilege Escalation",
+        "TA0005 - Defense Evasion",
+        "TA0006 - Credential Access",
+        "TA0008 - Lateral Movement",
+        "TA0043 - Reconnaissance"
+      ],
+      "factors": [
+        "1 unique external source(s)",
+        "3 unique internal target(s)",
+        "8 distinct event type(s)",
+        "1 lateral movement hop(s) detected"
+      ]
+    }
+  },
+  "narrative": "## Attack Campaign Summary\n\nBetween **2025-05-11T12:00:00Z** and **2026-05-11T03:21:00Z**, Sentinel_Fusion detected a coordinated multi-stage intrusion campaign. The attack originated from `185.220.101.45`, and `10.0.0.10`. Targeted assets include: `10.0.0.10`, `10.0.0.11`, and `10.0.0.20`.\n\n## Attack Phases\n\n\n### Phase 1: Reconnaissance\n_2025-05-11T12:00:00Z_\n\nThe attacker performed network reconnaissance against 3 target(s). 3 scan event(s) observed.\n\n### Phase 2: Credential Attack\n_2026-05-11T03:01:00Z_\n\n8 authentication failure(s) recorded from 1 source(s) targeting 1 host(s). This pattern is consistent with automated credential brute-forcing.\n\n### Phase 3: Initial Access\n_2026-05-11T03:09:00Z_\n\nAuthentication succeeded after credential attacks. The attacker gained access to 10.0.0.10, 10.0.0.11.\n\n## Detection Alerts\n\nThe following alert types were triggered during this campaign:\n\n- **correlated_attack_chain**: 2 instance(s)\n- **brute_force_detected**: 1 instance(s)\n- **lateral_movement_detected**: 1 instance(s)\n- **malicious_ip_activity**: 1 instance(s)\n- **tor_exit_node_activity**: 1 instance(s)\n- **high_risk_country_access**: 1 instance(s)\n- **off_hours_access**: 2 instance(s)\n- **threat_feed_match**: 1 instance(s)\n- **WINLOG-005**: 1 instance(s)\n- **WINLOG-006**: 1 instance(s)\n- **WINLOG-009**: 1 instance(s)\n\n## MITRE ATT&CK Coverage\n\nObserved tactics mapped to ATT&CK framework:\n\n- TA0006 - Credential Access\n- TA0001 - Initial Access\n- TA0008 - Lateral Movement\n- TA0043 - Reconnaissance\n- TA0005 - Defense Evasion\n- TA0003 - Persistence\n- TA0004 - Privilege Escalation\n\n## Analyst Recommendations\n\n- Block source IPs involved in brute force activity at the perimeter firewall.\n- Enforce account lockout policy: lock after 5 failed attempts within 10 minutes.\n- Enable multi-factor authentication on all externally-accessible SSH/RDP endpoints.\n- Isolate compromised hosts from the network pending forensic investigation.\n- Audit internal SMB and RDP session logs for unauthorized lateral connections.\n- Block all TOR exit node ranges at the network perimeter.\n- Update threat intelligence blocklists and enforce geo-blocking for high-risk regions.\n- Initiate full incident response procedure \u2014 multi-stage attack chain confirmed.\n- Preserve memory dumps and disk images from all affected hosts before remediation.",
+  "nra_recommendations": [
+    {
+      "ip": "10.0.0.10",
+      "overall_risk_level": "Critical",
+      "overall_host_summary": "Host 10.0.0.10 has 5 open port(s) assessed at overall Critical risk. Highest-priority service: NETBIOS-SSN on port 139 (High risk). Notable flags: cleartext protocol(s) detected: NETBIOS-SSN. Review all recommendations below in priority order.",
+      "recommendations": [
+        {
+          "port": 139,
+          "protocol": "tcp",
+          "service": "netbios-ssn",
+          "category": "File Sharing",
+          "subcategory": "NetBIOS",
+          "risk_level": "High",
+          "priority": 2,
+          "service_context": "NetBIOS Session Service used by legacy Windows file sharing on port 139. Enables host and workgroup name enumeration, exposing network topology. Commonly present alongside SMB on Windows systems. Has shared CVE history with EternalBlue.",
+          "risk_rationale": "NETBIOS-SSN is assessed at High risk. Prompt investigation is required before the next business day. This protocol transmits data in cleartext \u2014 credentials and content are exposed to interception on the network path. This service has a documented CVE history (1 notable CVE(s) on record) \u2014 patch status must be confirmed as part of triage.",
+          "action_taken": "Enumerate all NetBIOS names and workgroup memberships. Review SMB-related activity on the same host (ports 139 and 445). Consider disabling NetBIOS over TCP/IP if not operationally required.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [
+            "CVE-2017-0144"
+          ],
+          "flags": []
+        },
+        {
+          "port": 135,
+          "protocol": "tcp",
+          "service": "msrpc",
+          "category": "Windows Services",
+          "subcategory": "MS RPC",
+          "risk_level": "Medium",
+          "priority": 3,
+          "service_context": "Microsoft RPC Endpoint Mapper \u2014 dynamically assigns ports for Windows services including DCOM, WMI, and AD replication. Enables enumeration of registered Windows services via anonymous RPC sessions. Has a significant historical CVE record including the Blaster worm (MS03-026, CVE-2003-0352).",
+          "risk_rationale": "MSRPC is assessed at Medium risk. Schedule investigation within the standard SLA window. This service has a documented CVE history (1 notable CVE(s) on record) \u2014 patch status must be confirmed as part of triage.",
+          "action_taken": "Enumerate RPC endpoints to identify all exposed services. Test for anonymous RPC session access via rpcclient.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [
+            "CVE-2003-0352"
+          ],
+          "flags": []
+        },
+        {
+          "port": 445,
+          "protocol": "tcp",
+          "service": "smb",
+          "category": "File Sharing",
+          "subcategory": "Windows SMB",
+          "risk_level": "Medium",
+          "priority": 3,
+          "service_context": "Windows file and printer sharing. A high-value target for network-wide propagation (WannaCry, NotPetya), credential relay attacks, lateral movement, and data exfiltration. SMBv1 is critically dangerous due to EternalBlue (CVE-2017-0144).",
+          "risk_rationale": "SMB is assessed at Medium risk. Schedule investigation within the standard SLA window. This service has a documented CVE history (2 notable CVE(s) on record) \u2014 patch status must be confirmed as part of triage. MITRE ATT&CK relevance: Lateral Movement, Execution, Collection.",
+          "action_taken": "Enumerate accessible shares and test for null session (unauthenticated guest) access. Confirm SMBv1 is disabled and SMB signing is active. Review all share permissions.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [
+            "CVE-2017-0144",
+            "CVE-2020-0796"
+          ],
+          "flags": []
+        },
+        {
+          "port": 1433,
+          "protocol": "tcp",
+          "service": "mssql",
+          "category": "Database",
+          "subcategory": "MSSQL",
+          "risk_level": "Medium",
+          "priority": 3,
+          "service_context": "Microsoft SQL Server exposed over the network. Provides access to application databases and, if the SA account is accessible or xp_cmdshell is enabled, direct OS-level command execution. A weak SA password is one of the most commonly exploited misconfigurations in Windows environments.",
+          "risk_rationale": "MSSQL is assessed at Medium risk. Schedule investigation within the standard SLA window. MITRE ATT&CK relevance: Collection, Execution.",
+          "action_taken": "Check for empty SA password. Enumerate instance configuration. Verify xp_cmdshell is disabled. Review linked server configurations for privilege escalation paths.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [],
+          "flags": []
+        },
+        {
+          "port": 3389,
+          "protocol": "tcp",
+          "service": "rdp",
+          "category": "Remote Access",
+          "subcategory": "Remote Desktop",
+          "risk_level": "Medium",
+          "priority": 3,
+          "service_context": "Windows Remote Desktop Protocol providing full graphical access. Primary delivery vector for ransomware, targeted intrusion, and lateral movement in Windows environments. Internet-exposed RDP without Network Level Authentication is one of the highest-risk exposures in enterprise networks.",
+          "risk_rationale": "RDP is assessed at Medium risk. Schedule investigation within the standard SLA window. This service has a documented CVE history (3 notable CVE(s) on record) \u2014 patch status must be confirmed as part of triage. MITRE ATT&CK relevance: Initial Access, Lateral Movement.",
+          "action_taken": "Check RDP encryption level and NLA enforcement via rdp-enum-encryption. Verify account lockout policy is active. Review RDP event logs (Event ID 4625) for failed authentication attempts.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [
+            "CVE-2019-0708",
+            "CVE-2019-1181",
+            "CVE-2019-1182"
+          ],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "ip": "10.0.0.11",
+      "overall_risk_level": "Medium",
+      "overall_host_summary": "Host 10.0.0.11 has 4 open port(s) assessed at overall Medium risk. Highest-priority service: MYSQL on port 3306 (High risk). Notable flags: cleartext protocol(s) detected: HTTP; anonymous/unauthenticated access risk on: REDIS. Review all recommendations below in priority order.",
+      "recommendations": [
+        {
+          "port": 3306,
+          "protocol": "tcp",
+          "service": "mysql",
+          "category": "Database",
+          "subcategory": "MySQL",
+          "risk_level": "High",
+          "priority": 2,
+          "service_context": "MySQL relational database service exposed over the network. Represents a direct data exfiltration risk. Default installation misconfigurations \u2014 including empty root passwords, anonymous users, and the test database \u2014 are frequently exploited on internet-facing and improperly segmented hosts.",
+          "risk_rationale": "MYSQL is assessed at High risk. Prompt investigation is required before the next business day. This service has a documented CVE history (1 notable CVE(s) on record) \u2014 patch status must be confirmed as part of triage. MITRE ATT&CK relevance: Collection, Execution.",
+          "action_taken": "Audit all MySQL user accounts and their source IP restrictions. Remove anonymous accounts and the test database. Rotate all database credentials. Test for the CVE-2012-2122 authentication bypass.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [
+            "CVE-2012-2122"
+          ],
+          "flags": []
+        },
+        {
+          "port": 6379,
+          "protocol": "tcp",
+          "service": "redis",
+          "category": "Database",
+          "subcategory": "In-Memory Store",
+          "risk_level": "High",
+          "priority": 2,
+          "service_context": "In-memory data store often deployed without authentication by default. An unauthenticated Redis instance allows full data read/write access and, via CONFIG SET, arbitrary file writes to the server filesystem \u2014 enabling SSH authorized_keys injection and cron-based persistence without any credentials.",
+          "risk_rationale": "REDIS is assessed at High risk. Prompt investigation is required before the next business day. Unauthenticated or anonymous access is common with this service \u2014 authentication enforcement must be verified before treating the service as secured. MITRE ATT&CK relevance: Persistence, Execution.",
+          "action_taken": "If unauthenticated access is confirmed, enumerate stored keys for sensitive application data. Review CONFIG dir setting to confirm arbitrary file write paths are restricted. Enable requirepass and bind to localhost immediately.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [],
+          "flags": []
+        },
+        {
+          "port": 22,
+          "protocol": "tcp",
+          "service": "ssh",
+          "category": "Remote Access",
+          "subcategory": "Encrypted Shell",
+          "risk_level": "Medium",
+          "priority": 3,
+          "service_context": "Encrypted remote shell access. Primary system administration method on Linux/Unix systems. Targeted for credential brute-force, key theft, and as a pivot point for lateral movement.",
+          "risk_rationale": "SSH is assessed at Medium risk. Schedule investigation within the standard SLA window. This service has a documented CVE history (2 notable CVE(s) on record) \u2014 patch status must be confirmed as part of triage. MITRE ATT&CK relevance: Initial Access, Lateral Movement, Persistence.",
+          "action_taken": "Enumerate supported authentication methods and cipher algorithms. Review sshd_config for PasswordAuthentication=no and PermitRootLogin=no. Validate host key fingerprint against a known-good baseline.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [
+            "CVE-2023-38408",
+            "CVE-2018-10933"
+          ],
+          "flags": []
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "service": "http",
+          "category": "Web Service",
+          "subcategory": "Unencrypted HTTP",
+          "risk_level": "Medium",
+          "priority": 3,
+          "service_context": "Unencrypted web service. All data \u2014 including session tokens and submitted credentials \u2014 is transmitted in cleartext. Commonly hosts login portals, admin interfaces, and application endpoints. Vulnerable to content injection, session hijacking, and a broad range of web application attacks.",
+          "risk_rationale": "HTTP is assessed at Medium risk. Schedule investigation within the standard SLA window. This protocol transmits data in cleartext \u2014 credentials and content are exposed to interception on the network path. MITRE ATT&CK relevance: Initial Access.",
+          "action_taken": "Enumerate accessible paths and directories. Review security response headers (CSP, X-Frame-Options, HSTS redirect). Check for exposed admin interfaces, sensitive files, backup files, or default application pages.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [],
+          "flags": []
+        }
+      ]
+    },
+    {
+      "ip": "10.0.0.20",
+      "overall_risk_level": "Medium",
+      "overall_host_summary": "Host 10.0.0.20 has 3 open port(s) assessed at overall Medium risk. Highest-priority service: TELNET on port 23 (Critical risk). Notable flags: cleartext protocol(s) detected: FTP, TELNET; anonymous/unauthenticated access risk on: FTP. Review all recommendations below in priority order.",
+      "recommendations": [
+        {
+          "port": 23,
+          "protocol": "tcp",
+          "service": "telnet",
+          "category": "Remote Access",
+          "subcategory": "Cleartext Shell",
+          "risk_level": "Critical",
+          "priority": 1,
+          "service_context": "Unencrypted remote shell transmitting all data \u2014 including credentials \u2014 in cleartext over the network. No legitimate use case exists in modern infrastructure. Presence indicates a legacy device or a critical misconfiguration.",
+          "risk_rationale": "TELNET is assessed at Critical risk. Immediate triage and potential host isolation are warranted. This protocol transmits data in cleartext \u2014 credentials and content are exposed to interception on the network path. MITRE ATT&CK relevance: Initial Access.",
+          "action_taken": "Treat all credentials used over this connection as compromised. Disable telnet immediately. Initiate credential rotation for all accounts that may have authenticated over this service. Notify the security team and log all connected sessions in the incident record.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [],
+          "flags": []
+        },
+        {
+          "port": 21,
+          "protocol": "tcp",
+          "service": "ftp",
+          "category": "File Transfer",
+          "subcategory": "Cleartext FTP",
+          "risk_level": "High",
+          "priority": 2,
+          "service_context": "Cleartext file transfer protocol transmitting all data \u2014 including credentials \u2014 unencrypted over the network. High risk for anonymous access and credential interception. Should be replaced by SFTP or FTPS in all modern environments.",
+          "risk_rationale": "FTP is assessed at High risk. Prompt investigation is required before the next business day. This protocol transmits data in cleartext \u2014 credentials and content are exposed to interception on the network path. Unauthenticated or anonymous access is common with this service \u2014 authentication enforcement must be verified before treating the service as secured. This service has a documented CVE history (1 notable CVE(s) on record) \u2014 patch status must be confirmed as part of triage. MITRE ATT&CK relevance: Initial Access, Collection.",
+          "action_taken": "Audit FTP access logs for unauthorised sessions. Restrict accessible directories to least-privilege. Treat all FTP credentials as potentially compromised and initiate rotation.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [
+            "CVE-2011-1137"
+          ],
+          "flags": []
+        },
+        {
+          "port": 5900,
+          "protocol": "tcp",
+          "service": "vnc",
+          "category": "Remote Access",
+          "subcategory": "Remote Desktop",
+          "risk_level": "High",
+          "priority": 2,
+          "service_context": "Lightweight remote desktop protocol. Frequently deployed without passwords or with weak credentials. Transmits screen contents in cleartext in many configurations. Often exposed unintentionally on developer or lab systems.",
+          "risk_rationale": "VNC is assessed at High risk. Prompt investigation is required before the next business day. MITRE ATT&CK relevance: Initial Access, Lateral Movement.",
+          "action_taken": "Check for null authentication immediately. Restrict VNC to localhost and require an SSH tunnel for all external access. Review VNC access logs for unauthorised sessions.",
+          "enumeration_steps": [],
+          "hardening_checks": [],
+          "notable_cves": [],
+          "flags": []
+        }
+      ]
+    }
+  ],
+  "executive_summary": {
+    "verdict": "Critical",
+    "generated_at": "2026-05-11T20:21:06Z",
+    "key_findings": [
+      "Highest-risk host: 10.0.0.10 \u2014 Critical (score 9.8/10).",
+      "3 host(s) assessed; 1 Critical risk host(s) require immediate attention.",
+      "Lateral movement detected across 1 hop(s) \u2014 attacker has likely pivoted beyond the initial entry point.",
+      "Attack surface expansion rated 'Significant' (score 7.5/10) \u2014 multiple techniques and targets observed in this session.",
+      "3 Windows behavioural rule(s) fired: WINLOG-005, WINLOG-006, WINLOG-009.",
+      "Critical/High NRA service exposure: NETBIOS-SSN on 10.0.0.10:139, MYSQL on 10.0.0.11:3306, REDIS on 10.0.0.11:6379 (+3 more).",
+      "MITRE ATT&CK tactics observed: TA0001 - Initial Access, TA0003 - Persistence, TA0004 - Privilege Escalation, TA0005 - Defense Evasion, TA0006 - Credential Access, TA0008 - Lateral Movement, TA0043 - Reconnaissance."
+    ],
+    "immediate_actions": [
+      "Isolate Critical host(s) pending investigation: 10.0.0.10.",
+      "Engage incident response \u2014 lateral movement confirmed. Scope the blast radius before any remediation.",
+      "[WINLOG-006] Audit log cleared \u2014 treat as active evidence tampering. Engage incident response and preserve all available artefacts.",
+      "[WINLOG-009] Scheduled task persistence detected \u2014 enumerate and remove unauthorised scheduled tasks; review the process that created them.",
+      "Apply emergency controls for Critical-risk network service(s): TELNET (10.0.0.20:23)."
+    ],
+    "risk_surface": {
+      "critical_hosts": 1,
+      "high_hosts": 0,
+      "medium_hosts": 2,
+      "low_hosts": 0,
+      "total_alerts": 13,
+      "winlog_rules_fired": [
+        "WINLOG-005",
+        "WINLOG-006",
+        "WINLOG-009"
+      ],
+      "attack_surface_label": "significant",
+      "lateral_movement_detected": true,
+      "mitre_tactics": [
+        "TA0001 - Initial Access",
+        "TA0003 - Persistence",
+        "TA0004 - Privilege Escalation",
+        "TA0005 - Defense Evasion",
+        "TA0006 - Credential Access",
+        "TA0008 - Lateral Movement",
+        "TA0043 - Reconnaissance"
+      ]
+    },
+    "markdown": "## Executive Summary\n**Generated:** 2026-05-11T20:21:06Z  \n**Overall Verdict:** Critical\n\n### Risk Surface\n\n| Metric | Value |\n|--------|-------|\n| Critical Hosts | 1 |\n| High Hosts | 0 |\n| Medium Hosts | 2 |\n| Low Hosts | 0 |\n| Total Alerts | 13 |\n| Attack Surface | **Significant** |\n| Lateral Movement | Yes |\n| WINLOG Rules Fired | WINLOG-005, WINLOG-006, WINLOG-009 |\n| MITRE Tactics | TA0001 - Initial Access, TA0003 - Persistence, TA0004 - Privilege Escalation, TA0005 - Defense Evasion, TA0006 - Credential Access, TA0008 - Lateral Movement, TA0043 - Reconnaissance |\n\n### Key Findings\n\n- Highest-risk host: 10.0.0.10 \u2014 Critical (score 9.8/10).\n- 3 host(s) assessed; 1 Critical risk host(s) require immediate attention.\n- Lateral movement detected across 1 hop(s) \u2014 attacker has likely pivoted beyond the initial entry point.\n- Attack surface expansion rated 'Significant' (score 7.5/10) \u2014 multiple techniques and targets observed in this session.\n- 3 Windows behavioural rule(s) fired: WINLOG-005, WINLOG-006, WINLOG-009.\n- Critical/High NRA service exposure: NETBIOS-SSN on 10.0.0.10:139, MYSQL on 10.0.0.11:3306, REDIS on 10.0.0.11:6379 (+3 more).\n- MITRE ATT&CK tactics observed: TA0001 - Initial Access, TA0003 - Persistence, TA0004 - Privilege Escalation, TA0005 - Defense Evasion, TA0006 - Credential Access, TA0008 - Lateral Movement, TA0043 - Reconnaissance.\n\n### Immediate Actions Required\n\n1. Isolate Critical host(s) pending investigation: 10.0.0.10.\n2. Engage incident response \u2014 lateral movement confirmed. Scope the blast radius before any remediation.\n3. [WINLOG-006] Audit log cleared \u2014 treat as active evidence tampering. Engage incident response and preserve all available artefacts.\n4. [WINLOG-009] Scheduled task persistence detected \u2014 enumerate and remove unauthorised scheduled tasks; review the process that created them.\n5. Apply emergency controls for Critical-risk network service(s): TELNET (10.0.0.20:23).\n"
+  }
+}

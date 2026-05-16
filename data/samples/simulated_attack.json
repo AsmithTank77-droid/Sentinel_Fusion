@@ -1,0 +1,65 @@
+[
+  {
+    "timestamp": "2026-05-11T02:50:00Z",
+    "src_ip": "185.220.101.45",
+    "dst_ip": "10.0.0.10",
+    "event_type": "authentication_failure",
+    "severity": "medium"
+  },
+  {
+    "timestamp": "2026-05-11T02:51:00Z",
+    "src_ip": "185.220.101.45",
+    "dst_ip": "10.0.0.10",
+    "event_type": "authentication_failure",
+    "severity": "medium"
+  },
+  {
+    "timestamp": "2026-05-11T02:52:00Z",
+    "src_ip": "185.220.101.45",
+    "dst_ip": "10.0.0.10",
+    "event_type": "authentication_failure",
+    "severity": "medium"
+  },
+  {
+    "timestamp": "2026-05-11T02:53:00Z",
+    "src_ip": "185.220.101.45",
+    "dst_ip": "10.0.0.10",
+    "event_type": "authentication_failure",
+    "severity": "medium"
+  },
+  {
+    "timestamp": "2026-05-11T02:54:00Z",
+    "src_ip": "185.220.101.45",
+    "dst_ip": "10.0.0.10",
+    "event_type": "authentication_failure",
+    "severity": "medium"
+  },
+  {
+    "timestamp": "2026-05-11T02:54:30Z",
+    "src_ip": "185.220.101.45",
+    "dst_ip": "10.0.0.10",
+    "event_type": "authentication_success",
+    "severity": "high"
+  },
+  {
+    "timestamp": "2026-05-11T02:55:00Z",
+    "src_ip": "10.0.0.10",
+    "dst_ip": "10.0.0.11",
+    "event_type": "lateral_movement",
+    "severity": "critical"
+  },
+  {
+    "timestamp": "2026-05-11T02:56:00Z",
+    "src_ip": "10.0.0.10",
+    "dst_ip": "10.0.0.11",
+    "event_type": "authentication_success",
+    "severity": "high"
+  },
+  {
+    "timestamp": "2026-05-11T02:57:00Z",
+    "src_ip": "10.0.0.10",
+    "dst_ip": "10.0.0.11",
+    "event_type": "data_exfiltration",
+    "severity": "critical"
+  }
+]

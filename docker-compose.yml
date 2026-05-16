@@ -1,0 +1,67 @@
+version: "3.9"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Sentinel Fusion — Docker Compose
+#
+# Quick start:
+#   docker-compose up --build
+#
+# API:      http://localhost:8000/api/v1/health
+# Swagger:  http://localhost:8000/api/docs
+# ReDoc:    http://localhost:8000/api/redoc
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  sentinel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+
+    image: sentinel-fusion:latest
+
+    container_name: sentinel-fusion
+
+    ports:
+      - "${SENTINEL_PORT:-8000}:8000"
+
+    volumes:
+      # Persist SQLite database across container restarts
+      - sentinel_data:/app/data
+
+    environment:
+      SENTINEL_DB:             ${SENTINEL_DB:-/app/data/sentinel.db}
+      SENTINEL_HOST:           ${SENTINEL_HOST:-0.0.0.0}
+      SENTINEL_PORT:           ${SENTINEL_PORT:-8000}
+      SENTINEL_LOG_LEVEL:      ${SENTINEL_LOG_LEVEL:-info}
+      SENTINEL_ENV:            ${SENTINEL_ENV:-production}
+      SENTINEL_WORKERS:        ${SENTINEL_WORKERS:-1}
+      SENTINEL_RETENTION_DAYS: ${SENTINEL_RETENTION_DAYS:-90}
+      SENTINEL_DEBUG:          ${SENTINEL_DEBUG:-false}
+
+    env_file:
+      - path: .env
+        required: false   # .env is optional — defaults are safe
+
+    restart: unless-stopped
+
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  sentinel_data:
+    driver: local
