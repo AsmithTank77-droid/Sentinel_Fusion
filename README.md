@@ -9,7 +9,7 @@
 ![SQLite](https://img.shields.io/badge/storage-SQLite-003B57?logo=sqlite&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey)
 
-Sentinel_Fusion is an 8-stage detection pipeline that ingests Nmap scans and Windows Event Logs, correlates them into attack chains, and produces structured JSON and Markdown SOC reports with host risk scores, MITRE ATT&CK mappings, WINLOG behavioral alerts, and per-service triage recommendations.
+Sentinel_Fusion is a 9-stage detection pipeline that ingests Nmap scans and Windows Event Logs, correlates them into attack chains, and produces structured JSON and Markdown SOC reports with host risk scores, MITRE ATT&CK mappings, WINLOG behavioral alerts, and per-service triage recommendations.
 
 Incorporates the full logic of:
 - **nmap-recon-analyzer** — Nmap XML parsing, service risk scoring, CVE mapping, SOC triage recommendations
@@ -48,7 +48,7 @@ pytest tests/
 
 ## Screenshots
 
-**Pipeline execution — 8-stage trace with live alert feed:**
+**Pipeline execution — 9-stage trace with live alert feed:**
 
 ![Pipeline Trace](assets/screenshot_pipeline.svg)
 
@@ -115,18 +115,19 @@ Full sample output: [`data/samples/sample_report.md`](data/samples/sample_report
 
 ## Pipeline Architecture
 
-All data follows this strict 8-stage sequence — no step may be skipped or reordered:
+All data follows this strict 9-stage sequence — no step may be skipped or reordered:
 
 | # | Stage | Module | What it does |
 |---|-------|--------|--------------|
 | 1 | Ingest | `core/pipeline/ingest.py` | Loads raw files into dicts; no transformation |
 | 2 | Normalize | `core/pipeline/normalize.py` | Maps all sources to a unified event schema |
 | 3 | Enrich | `core/pipeline/enrich.py` | IP reputation, geo, threat feeds, service context |
-| 4 | Correlate | `detection/correlation_engine.py` | Groups events into attack chains |
-| 5 | Detect | `detection/` | Stateless detectors emit confidence-scored alerts |
-| 6 | Score | `scoring/` | Host risk (0–10), asset exposure, attack surface |
-| 7 | Timeline | `narrative/timeline_builder.py` | Chronological events + SOC narrative |
-| 8 | Report | `reporting/report_generator.py` | JSON + Markdown with executive summary and NRA triage |
+| 4 | Sigma | `detection/sigma_engine.py` | 10 MITRE-mapped Sigma rules; confidence-scored alerts |
+| 5 | Correlate | `detection/correlation_engine.py` | Groups events into attack chains |
+| 6 | Detect | `detection/` | Stateless detectors emit confidence-scored alerts |
+| 7 | Score | `scoring/` | Host risk (0–10), asset exposure, attack surface |
+| 8 | Timeline | `narrative/timeline_builder.py` | Chronological events + SOC narrative |
+| 9 | Report | `reporting/report_generator.py` | JSON + Markdown with executive summary and NRA triage |
 
 The orchestrator (`core/pipeline/orchestrator.py`) drives the full run. `StorageLayer.persist_run()` is the only caller that writes a complete result to the database.
 
