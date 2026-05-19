@@ -107,9 +107,9 @@ class TestPipelineOrchestratorFullRun:
         assert "markdown" in result["report"]
         assert isinstance(result["report"]["markdown"], str)
 
-    def test_trace_has_eight_stages(self):
+    def test_trace_has_nine_stages(self):
         result = self._run_demo()
-        assert len(result["trace"]) == 8
+        assert len(result["trace"]) == 9
 
     def test_all_trace_stages_ok(self):
         result = self._run_demo()
@@ -119,8 +119,28 @@ class TestPipelineOrchestratorFullRun:
     def test_trace_stage_names(self):
         result = self._run_demo()
         names = [s["stage"] for s in result["trace"]]
-        assert names == ["ingest", "normalize", "enrich",
+        assert names == ["ingest", "normalize", "enrich", "sigma",
                          "correlate", "detect", "score", "timeline", "report"]
+
+    def test_sigma_stage_in_trace(self):
+        result = self._run_demo()
+        sigma_trace = next((s for s in result["trace"] if s["stage"] == "sigma"), None)
+        assert sigma_trace is not None
+        assert sigma_trace["status"] == "ok"
+        assert "count" in sigma_trace
+
+    def test_sigma_alerts_flow_into_alert_pool(self):
+        # Feed a process-creation event that triggers SF-SIG-001 (certutil LOLBin)
+        winlog_proc = {
+            "EventID": 4688, "TimeCreated": "2026-05-09T02:16:00Z",
+            "IpAddress": "185.220.101.45", "dst_ip": "10.0.0.5",
+            "event_id": 4688,
+            "command_line": "certutil -decode encoded.txt output.exe",
+            "image": "C:\\Windows\\System32\\certutil.exe",
+        }
+        result = self.orch.run({"winlog": [winlog_proc]})
+        types = {a["alert_type"] for a in result["alerts"]}
+        assert "sigma_rule_match" in types
 
     def test_nra_only_run(self):
         result = self.orch.run({"nra": _NRA})

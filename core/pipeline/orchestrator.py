@@ -1,6 +1,6 @@
 """
 orchestrator.py — Stage Coordinator
-Pipeline: ingest → normalize → enrich → correlate → detect → score → timeline → report
+Pipeline: ingest → normalize → enrich → sigma → correlate → detect → score → timeline → report
 
 Coordinates end-to-end pipeline execution only. No detection, scoring, or
 reporting logic lives here. Each stage delegates entirely to its module.
@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import core.pipeline.ingest as _ingest_mod
 import core.pipeline.enrich as _enrich_mod
+import detection.sigma_engine as _sigma_mod
 import detection.correlation_engine as _correlation_mod
 import detection.brute_force_detection as _brute_force_mod
 import detection.lateral_movement_detection as _lateral_movement_mod
@@ -130,11 +131,12 @@ class PipelineOrchestrator:
         1. ingest      — raw event intake, source tagging, pre-validation
         2. normalize   — unified NormalizedEvent schema conversion
         3. enrich      — threat intelligence and context augmentation
-        4. correlate   — cross-event attack chain detection
-        5. detect      — per-module stateless detection (brute force, lateral, anomaly)
-        6. score       — host risk, asset risk, attack surface expansion
-        7. timeline    — chronological attack narrative construction
-        8. report      — structured JSON + Markdown SOC report
+        4. sigma       — Sigma-compatible rule evaluation against enriched events
+        5. correlate   — cross-event attack chain detection
+        6. detect      — per-module stateless detection (brute force, lateral, anomaly)
+        7. score       — host risk, asset risk, attack surface expansion
+        8. timeline    — chronological attack narrative construction
+        9. report      — structured JSON + Markdown SOC report
 
     The orchestrator holds no mutable state between runs. Every call to run()
     is independent and deterministic given the same inputs.
@@ -238,11 +240,12 @@ class PipelineOrchestrator:
 
         trace: list[dict] = []
 
-        raw_tagged  = self._stage_ingest(inputs, trace)
-        normalized  = self._stage_normalize(raw_tagged, trace)
-        enriched    = self._stage_enrich(normalized, trace)
-        correlated  = self._stage_correlate(enriched, trace)
-        alerts      = self._stage_detect(enriched, correlated, trace)
+        raw_tagged    = self._stage_ingest(inputs, trace)
+        normalized    = self._stage_normalize(raw_tagged, trace)
+        enriched      = self._stage_enrich(normalized, trace)
+        sigma_alerts  = self._stage_sigma(enriched, trace)
+        correlated    = self._stage_correlate(enriched, trace)
+        alerts        = self._stage_detect(enriched, correlated, sigma_alerts, trace)
         scores      = self._stage_score(enriched, alerts, trace)
         timeline    = self._stage_timeline(enriched, alerts, scores, trace)
         report      = self._stage_report(timeline, scores, alerts, trace, enriched)
@@ -373,7 +376,36 @@ class PipelineOrchestrator:
             raise PipelineStageError(STAGE, exc) from exc
 
     # ------------------------------------------------------------------
-    # Stage 4: Correlate
+    # Stage 4: Sigma Rule Evaluation
+    # ------------------------------------------------------------------
+
+    def _stage_sigma(
+        self,
+        enriched: list[NormalizedEvent],
+        trace: list[dict],
+    ) -> list[dict]:
+        """
+        Runs SigmaEngine.detect() against the full enriched event batch.
+
+        Sigma rules are evaluated before correlation so that rule-match alerts
+        can inform the correlation and detect stages downstream. Results are
+        seeded into the detect stage alert pool alongside correlated chains.
+        """
+        STAGE = "sigma"
+        try:
+            SigmaEngine  = _require(_sigma_mod, "SigmaEngine", STAGE)
+            events_dicts = [e.to_dict() for e in enriched]
+            results      = SigmaEngine().detect(events_dicts)
+            _assert_list(results, "SigmaEngine.detect()", STAGE)
+            trace.append({"stage": STAGE, "status": "ok", "count": len(results)})
+            return results
+        except PipelineStageError:
+            raise
+        except Exception as exc:
+            raise PipelineStageError(STAGE, exc) from exc
+
+    # ------------------------------------------------------------------
+    # Stage 5: Correlate
     # ------------------------------------------------------------------
 
     def _stage_correlate(
@@ -400,20 +432,22 @@ class PipelineOrchestrator:
             raise PipelineStageError(STAGE, exc) from exc
 
     # ------------------------------------------------------------------
-    # Stage 5: Detect
+    # Stage 6: Detect
     # ------------------------------------------------------------------
 
     def _stage_detect(
         self,
         normalized: list[NormalizedEvent],
         correlated: list[dict],
+        sigma_alerts: list[dict],
         trace: list[dict],
     ) -> list[dict]:
         """
         Runs all detection modules against the full normalized event batch.
-        Seeds alerts with correlated chains from Stage 3; each detector appends
-        its own findings. Detection modules are stateless and receive the full
-        event list so cross-event patterns (e.g. brute force counting) are visible.
+        Alert pool is seeded with correlated chains (Stage 5) and Sigma rule
+        matches (Stage 4); each detector appends its own findings. Detection
+        modules are stateless and receive the full event list so cross-event
+        patterns (e.g. brute force counting) are visible.
         """
         STAGE = "detect"
         try:
@@ -430,7 +464,7 @@ class PipelineOrchestrator:
             ]
 
             events_dicts = [e.to_dict() for e in normalized]
-            alerts: list[dict] = list(correlated)
+            alerts: list[dict] = list(correlated) + list(sigma_alerts)
 
             for detector in detectors:
                 results = detector.detect(events_dicts)
