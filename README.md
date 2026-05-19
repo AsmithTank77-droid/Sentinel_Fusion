@@ -4,7 +4,8 @@
 
 ![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-670%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-874%20passing-brightgreen)
+![CI](https://github.com/AsmithTank77-droid/Sentinel_Fusion/actions/workflows/test.yml/badge.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-REST%20API-009688?logo=fastapi&logoColor=white)
 ![SQLite](https://img.shields.io/badge/storage-SQLite-003B57?logo=sqlite&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey)
@@ -135,6 +136,20 @@ The orchestrator (`core/pipeline/orchestrator.py`) drives the full run. `Storage
 
 ## Detection Capabilities
 
+### Sigma Engine (10 built-in rules)
+| Rule ID | Title | MITRE Tactic |
+|---------|-------|--------------|
+| SF-SIG-001 | CertUtil LOLBin Abuse | TA0005 - Defense Evasion |
+| SF-SIG-002 | Encoded PowerShell Execution | TA0002 - Execution |
+| SF-SIG-003 | PowerShell Download Cradle | TA0011 - Command and Control |
+| SF-SIG-004 | LSASS Memory Access | TA0006 - Credential Access |
+| SF-SIG-005 | PsExec Lateral Movement | TA0008 - Lateral Movement |
+| SF-SIG-006 | Shadow Copy Deletion | TA0040 - Impact |
+| SF-SIG-007 | WMI Persistence | TA0003 - Persistence |
+| SF-SIG-008 | Suspicious Scheduled Task | TA0003 - Persistence |
+| SF-SIG-009 | NTDS.dit Access | TA0006 - Credential Access |
+| SF-SIG-010 | Anomalous Logon from External IP | TA0001 - Initial Access |
+
 ### Network (NRA)
 - Service risk scoring for 30+ protocols (RDP, SMB, SSH, MySQL, Redis, Elasticsearch, etc.)
 - Dangerous service combination detection (SMB+RDP → ransomware staging, SSH+MySQL → lateral movement risk)
@@ -158,18 +173,25 @@ The orchestrator (`core/pipeline/orchestrator.py`) drives the full run. `Storage
 
 ## REST API
 
+All routes are under `/api/v1/`. Start the server with `python api/run.py` or `uvicorn api.app:app --reload`.
+
 ```
-GET  /health                   Health check
-POST /pipeline/run             Run the pipeline (JSON body with event arrays)
-GET  /events                   Query stored events
-GET  /alerts                   Query stored alerts
-GET  /scores                   Query host and asset risk scores
-GET  /intel/service/{name}     Service threat intelligence lookup
-GET  /intel/event/{id}         Windows Event ID lookup
-GET  /runs                     Pipeline run history
+GET  /api/v1/health                          Liveness check
+GET  /api/v1/status                          Platform statistics (totals, top risk hosts, alert breakdown)
+POST /api/v1/pipeline/run                    Run the pipeline (JSON body: {nra, winlog, mock} event arrays)
+GET  /api/v1/pipeline/runs                   Pipeline run history
+GET  /api/v1/pipeline/runs/{run_id}          Get a specific pipeline run
+GET  /api/v1/events                          Query stored normalized events
+GET  /api/v1/alerts                          Query stored alerts (filterable by status, confidence)
+PATCH /api/v1/alerts/{id}/status             Update alert status (open → investigating → contained → closed)
+GET  /api/v1/cases                           List incident cases (Kanban: open/investigating/contained/closed)
+GET  /api/v1/scores/hosts                    Latest host risk scores
+GET  /api/v1/scores/hosts/{ip}               Risk score history for a specific host
+GET  /api/v1/scores/attack-surface           Attack surface expansion history
+GET  /api/v1/intel/ip/{ip}                   IP threat intelligence (reputation + geo + feed hits)
 ```
 
-Docs available at `http://localhost:8000/docs` when the API is running.
+Interactive docs at `http://localhost:8000/docs` · Dashboard at `http://localhost:8000/dashboard`
 
 ---
 
@@ -218,12 +240,14 @@ Sentinel_Fusion/
 │   └── utils/
 │       └── ip_utils.py
 │
-├── detection/                      # Stage 5 — stateless detection modules
-│   ├── correlation_engine.py       # Stage 4 — event correlation / attack chain
-│   ├── anomaly_detection.py
-│   ├── brute_force_detection.py
-│   ├── lateral_movement_detection.py
-│   └── winlog_rules.py             # 9 behavioral rules (brute force, lateral movement, persistence, etc.)
+├── detection/                      # Stages 4 & 6 — Sigma engine and stateless detectors
+│   ├── sigma_field_mapper.py       # Stage 4 — maps Sigma field names to normalized schema
+│   ├── sigma_engine.py             # Stage 4 — 10 MITRE-mapped Sigma-compatible rules
+│   ├── correlation_engine.py       # Stage 5 — event correlation / attack chain
+│   ├── anomaly_detection.py        # Stage 6
+│   ├── brute_force_detection.py    # Stage 6
+│   ├── lateral_movement_detection.py  # Stage 6
+│   └── winlog_rules.py             # Stage 6 — 9 behavioral rules (brute force, lateral movement, persistence, etc.)
 │
 ├── scoring/                        # Stage 6 — risk scoring
 │   ├── host_risk.py
@@ -244,6 +268,7 @@ Sentinel_Fusion/
 │   ├── ip_reputation.py            # IP reputation: seed table → AbuseIPDB → stub fallback
 │   ├── geo_enrichment.py           # Geolocation: seed table → ip-api.com → stub fallback
 │   ├── threat_feeds.py             # Threat feed membership lookup
+│   ├── threat_enricher.py          # Synthesizes rep + geo + feeds into a single composite assessment
 │   ├── event_intelligence.py       # Windows Event ID knowledge base (MITRE, severity, analyst notes)
 │   └── service_intelligence.py     # Network service knowledge base (risk scores, threat descriptions, CVEs)
 │
@@ -319,6 +344,9 @@ Sentinel_Fusion/
 │   ├── test_event_intelligence.py
 │   ├── test_service_intelligence.py
 │   ├── test_storage.py
+│   ├── test_sigma_field_mapper.py
+│   ├── test_sigma_engine.py
+│   ├── test_threat_enricher.py
 │   ├── test_orchestrator.py
 │   ├── test_api.py                 # includes API key auth tests
 │   ├── test_cli.py
@@ -342,6 +370,6 @@ Sentinel_Fusion/
 ## Running Tests
 
 ```bash
-pytest tests/           # 670 tests, ~2s
+pytest tests/           # 874 tests, ~2s
 pytest tests/ -v        # verbose output per test
 ```
