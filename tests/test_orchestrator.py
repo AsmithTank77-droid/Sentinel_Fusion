@@ -63,7 +63,7 @@ class TestPipelineOrchestratorFullRun:
     def test_run_returns_all_expected_keys(self):
         result = self._run_demo()
         expected = {"event_count", "normalized_events", "alerts",
-                    "scores", "timeline", "report", "trace"}
+                    "scores", "timeline", "report", "hunt_findings", "trace"}
         assert expected == set(result.keys())
 
     def test_event_count_correct(self):
@@ -107,9 +107,9 @@ class TestPipelineOrchestratorFullRun:
         assert "markdown" in result["report"]
         assert isinstance(result["report"]["markdown"], str)
 
-    def test_trace_has_nine_stages(self):
+    def test_trace_has_ten_stages(self):
         result = self._run_demo()
-        assert len(result["trace"]) == 9
+        assert len(result["trace"]) == 10
 
     def test_all_trace_stages_ok(self):
         result = self._run_demo()
@@ -120,7 +120,7 @@ class TestPipelineOrchestratorFullRun:
         result = self._run_demo()
         names = [s["stage"] for s in result["trace"]]
         assert names == ["ingest", "normalize", "enrich", "sigma",
-                         "correlate", "detect", "score", "timeline", "report"]
+                         "correlate", "detect", "score", "timeline", "report", "hunt"]
 
     def test_sigma_stage_in_trace(self):
         result = self._run_demo()
@@ -128,6 +128,17 @@ class TestPipelineOrchestratorFullRun:
         assert sigma_trace is not None
         assert sigma_trace["status"] == "ok"
         assert "count" in sigma_trace
+
+    def test_hunt_stage_in_trace(self):
+        result = self._run_demo()
+        hunt_trace = next((s for s in result["trace"] if s["stage"] == "hunt"), None)
+        assert hunt_trace is not None
+        assert hunt_trace["status"] == "ok"
+        assert "count" in hunt_trace
+
+    def test_hunt_findings_is_list(self):
+        result = self._run_demo()
+        assert isinstance(result["hunt_findings"], list)
 
     def test_sigma_alerts_flow_into_alert_pool(self):
         # Feed a process-creation event that triggers SF-SIG-001 (certutil LOLBin)

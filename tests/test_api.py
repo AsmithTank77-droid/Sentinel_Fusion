@@ -114,7 +114,7 @@ class TestPipelineRun:
         assert body["alert_count"] >= 1
         assert body["run_id"].startswith("run-")
         assert isinstance(body["trace"], list)
-        assert len(body["trace"]) == 9          # 9 pipeline stages (sigma added)
+        assert len(body["trace"]) == 10         # 10 pipeline stages (hunt added)
         assert isinstance(body["scores"], dict)
         assert "host_risk" in body["scores"]
         assert isinstance(body["top_alerts"], list)

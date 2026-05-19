@@ -1,6 +1,6 @@
 """
 orchestrator.py — Stage Coordinator
-Pipeline: ingest → normalize → enrich → sigma → correlate → detect → score → timeline → report
+Pipeline: ingest → normalize → enrich → sigma → correlate → detect → score → timeline → report → hunt
 
 Coordinates end-to-end pipeline execution only. No detection, scoring, or
 reporting logic lives here. Each stage delegates entirely to its module.
@@ -24,6 +24,7 @@ import scoring.asset_risk as _asset_risk_mod
 import scoring.attack_surface as _attack_surface_mod
 import narrative.timeline_builder as _timeline_mod
 import reporting.report_generator as _report_mod
+import hunting.hunt_engine as _hunt_mod
 
 from core.pipeline.normalize import Normalizer, NormalizedEvent
 
@@ -128,15 +129,16 @@ class PipelineOrchestrator:
     Executes the Sentinel_Fusion detection pipeline end-to-end.
 
     Stage order (fixed, CLAUDE.md §2):
-        1. ingest      — raw event intake, source tagging, pre-validation
-        2. normalize   — unified NormalizedEvent schema conversion
-        3. enrich      — threat intelligence and context augmentation
-        4. sigma       — Sigma-compatible rule evaluation against enriched events
-        5. correlate   — cross-event attack chain detection
-        6. detect      — per-module stateless detection (brute force, lateral, anomaly)
-        7. score       — host risk, asset risk, attack surface expansion
-        8. timeline    — chronological attack narrative construction
-        9. report      — structured JSON + Markdown SOC report
+        1.  ingest      — raw event intake, source tagging, pre-validation
+        2.  normalize   — unified NormalizedEvent schema conversion
+        3.  enrich      — threat intelligence and context augmentation
+        4.  sigma       — Sigma-compatible rule evaluation against enriched events
+        5.  correlate   — cross-event attack chain detection
+        6.  detect      — per-module stateless detection (brute force, lateral, anomaly)
+        7.  score       — host risk, asset risk, attack surface expansion
+        8.  timeline    — chronological attack narrative construction
+        9.  report      — structured JSON + Markdown SOC report
+        10. hunt        — cross-run proactive threat hunting (requires store)
 
     The orchestrator holds no mutable state between runs. Every call to run()
     is independent and deterministic given the same inputs.
@@ -194,14 +196,16 @@ class PipelineOrchestrator:
     # Public entry point
     # ------------------------------------------------------------------
 
-    def run(self, inputs: dict[str, list[dict]]) -> dict:
+    def run(self, inputs: dict[str, list[dict]], store=None) -> dict:
         """
-        Execute the full eight-stage pipeline over a multi-source event batch.
+        Execute the full 10-stage pipeline over a multi-source event batch.
 
         Args:
             inputs: {source_type: [raw_event_dict, ...]}
                     Valid source_type values: "nra", "winlog", "mock".
                     Any key may be absent; empty lists are accepted.
+            store:  Optional StorageLayer. Required for Stage 10 (hunt).
+                    If None, hunt returns [] and the stage still appears in trace.
 
         Returns:
             {
@@ -214,7 +218,8 @@ class PipelineOrchestrator:
                     "json":     dict,
                     "markdown": str,
                 },
-                "trace": list[dict],               # per-stage audit log
+                "hunt_findings":     list[dict],   # cross-run proactive hunt results
+                "trace":             list[dict],   # per-stage audit log
             }
 
         Raises:
@@ -246,9 +251,10 @@ class PipelineOrchestrator:
         sigma_alerts  = self._stage_sigma(enriched, trace)
         correlated    = self._stage_correlate(enriched, trace)
         alerts        = self._stage_detect(enriched, correlated, sigma_alerts, trace)
-        scores      = self._stage_score(enriched, alerts, trace)
-        timeline    = self._stage_timeline(enriched, alerts, scores, trace)
-        report      = self._stage_report(timeline, scores, alerts, trace, enriched)
+        scores        = self._stage_score(enriched, alerts, trace)
+        timeline      = self._stage_timeline(enriched, alerts, scores, trace)
+        report        = self._stage_report(timeline, scores, alerts, trace, enriched)
+        hunt_findings = self._stage_hunt(store, trace)
 
         return {
             "event_count":       len(enriched),
@@ -257,6 +263,7 @@ class PipelineOrchestrator:
             "scores":            scores,
             "timeline":          timeline,
             "report":            report,
+            "hunt_findings":     hunt_findings,
             "trace":             trace,
         }
 
@@ -486,7 +493,7 @@ class PipelineOrchestrator:
             raise PipelineStageError(STAGE, exc) from exc
 
     # ------------------------------------------------------------------
-    # Stage 6: Score
+    # Stage 7: Score
     # ------------------------------------------------------------------
 
     def _stage_score(
@@ -520,7 +527,7 @@ class PipelineOrchestrator:
             raise PipelineStageError(STAGE, exc) from exc
 
     # ------------------------------------------------------------------
-    # Stage 7: Timeline
+    # Stage 8: Timeline
     # ------------------------------------------------------------------
 
     def _stage_timeline(
@@ -552,7 +559,7 @@ class PipelineOrchestrator:
             raise PipelineStageError(STAGE, exc) from exc
 
     # ------------------------------------------------------------------
-    # Stage 8: Report
+    # Stage 9: Report
     # ------------------------------------------------------------------
 
     def _stage_report(
@@ -592,6 +599,28 @@ class PipelineOrchestrator:
                 )
             trace.append({"stage": STAGE, "status": "ok"})
             return report
+        except PipelineStageError:
+            raise
+        except Exception as exc:
+            raise PipelineStageError(STAGE, exc) from exc
+
+    # ------------------------------------------------------------------
+    # Stage 10: Hunt
+    # ------------------------------------------------------------------
+
+    def _stage_hunt(self, store, trace: list[dict]) -> list[dict]:
+        """
+        Runs HuntEngine.hunt() against StorageLayer to surface cross-run
+        threat patterns. If store is None (test / no-DB environments),
+        returns [] — the stage still appears in the trace with count=0.
+        """
+        STAGE = "hunt"
+        try:
+            HuntEngine = _require(_hunt_mod, "HuntEngine", STAGE)
+            findings   = HuntEngine().hunt(store)
+            _assert_list(findings, "HuntEngine.hunt()", STAGE)
+            trace.append({"stage": STAGE, "status": "ok", "count": len(findings)})
+            return findings
         except PipelineStageError:
             raise
         except Exception as exc:

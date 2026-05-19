@@ -22,7 +22,7 @@ router = APIRouter(prefix="/pipeline", tags=["pipeline"])
     "/run",
     response_model=PipelineRunResponse,
     status_code=status.HTTP_200_OK,
-    summary="Execute the full 8-stage detection pipeline",
+    summary="Execute the full 10-stage detection pipeline",
 )
 def run_pipeline(
     body: PipelineRunRequest,
@@ -49,7 +49,7 @@ def run_pipeline(
         )
 
     try:
-        result = orchestrator.run(inputs)
+        result = orchestrator.run(inputs, store=store)
     except PipelineStageError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
