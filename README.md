@@ -4,13 +4,13 @@
 
 ![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-874%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-917%20passing-brightgreen)
 ![CI](https://github.com/AsmithTank77-droid/Sentinel_Fusion/actions/workflows/test.yml/badge.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-REST%20API-009688?logo=fastapi&logoColor=white)
 ![SQLite](https://img.shields.io/badge/storage-SQLite-003B57?logo=sqlite&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey)
 
-Sentinel_Fusion is a 9-stage detection pipeline that ingests Nmap scans and Windows Event Logs, correlates them into attack chains, and produces structured JSON and Markdown SOC reports with host risk scores, MITRE ATT&CK mappings, WINLOG behavioral alerts, and per-service triage recommendations.
+Sentinel_Fusion is a 10-stage detection pipeline that ingests Nmap scans and Windows Event Logs, correlates them into attack chains, and produces structured JSON and Markdown SOC reports with host risk scores, MITRE ATT&CK mappings, WINLOG behavioral alerts, per-service triage recommendations, and proactive cross-run threat hunting.
 
 Incorporates the full logic of:
 - **nmap-recon-analyzer** — Nmap XML parsing, service risk scoring, CVE mapping, SOC triage recommendations
@@ -49,7 +49,7 @@ pytest tests/
 
 ## Screenshots
 
-**Pipeline execution — 9-stage trace with live alert feed:**
+**Pipeline execution — 10-stage trace with live alert feed:**
 
 ![Pipeline Trace](assets/screenshot_pipeline.svg)
 
@@ -116,7 +116,7 @@ Full sample output: [`data/samples/sample_report.md`](data/samples/sample_report
 
 ## Pipeline Architecture
 
-All data follows this strict 9-stage sequence — no step may be skipped or reordered:
+All data follows this strict 10-stage sequence — no step may be skipped or reordered:
 
 | # | Stage | Module | What it does |
 |---|-------|--------|--------------|
@@ -129,12 +129,24 @@ All data follows this strict 9-stage sequence — no step may be skipped or reor
 | 7 | Score | `scoring/` | Host risk (0–10), asset exposure, attack surface |
 | 8 | Timeline | `narrative/timeline_builder.py` | Chronological events + SOC narrative |
 | 9 | Report | `reporting/report_generator.py` | JSON + Markdown with executive summary and NRA triage |
+| 10 | Hunt | `hunting/hunt_engine.py` | Cross-run proactive threat hunting — surfaces low-and-slow patterns invisible to the live pipeline |
 
 The orchestrator (`core/pipeline/orchestrator.py`) drives the full run. `StorageLayer.persist_run()` is the only caller that writes a complete result to the database.
 
 ---
 
 ## Detection Capabilities
+
+### Threat Hunt Engine (Stage 10 — cross-run)
+
+| Hunt Type | What it finds | MITRE Tactic |
+|-----------|---------------|--------------|
+| `low_and_slow_brute_force` | Same src_ip with auth failures across 3+ runs, each below the live threshold | TA0006 - Credential Access |
+| `alert_cluster` | Same src_ip with 3+ open alerts individually dismissed but collectively significant | TA0043 - Reconnaissance |
+| `beacon` | Same (src_ip → dst_ip) pair in 5+ separate runs — consistent with C2 check-in | TA0011 - Command and Control |
+| `persistent_threat_actor` | Same external src_ip appearing in events across 5+ separate runs | TA0043 - Reconnaissance |
+
+Hunt findings appear in `hunt_findings` in the pipeline output alongside `alerts`. Each finding includes `hunt_confidence`, MITRE tactic, `run_count`, evidence dict, and a plain-English `analyst_note`.
 
 ### Sigma Engine (10 built-in rules)
 | Rule ID | Title | MITRE Tactic |
@@ -239,6 +251,9 @@ Sentinel_Fusion/
 │   │   └── orchestrator.py         # Runs the full pipeline end-to-end
 │   └── utils/
 │       └── ip_utils.py
+│
+├── hunting/                        # Stage 10 — proactive cross-run threat hunting
+│   └── hunt_engine.py              # HuntEngine: low-and-slow BF, beacon, alert cluster, persistent actor
 │
 ├── detection/                      # Stages 4 & 6 — Sigma engine and stateless detectors
 │   ├── sigma_field_mapper.py       # Stage 4 — maps Sigma field names to normalized schema
@@ -347,6 +362,7 @@ Sentinel_Fusion/
 │   ├── test_sigma_field_mapper.py
 │   ├── test_sigma_engine.py
 │   ├── test_threat_enricher.py
+│   ├── test_hunt_engine.py
 │   ├── test_orchestrator.py
 │   ├── test_api.py                 # includes API key auth tests
 │   ├── test_cli.py
@@ -370,6 +386,6 @@ Sentinel_Fusion/
 ## Running Tests
 
 ```bash
-pytest tests/           # 874 tests, ~2s
+pytest tests/           # 917 tests, ~3s
 pytest tests/ -v        # verbose output per test
 ```
