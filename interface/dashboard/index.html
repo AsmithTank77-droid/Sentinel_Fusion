@@ -829,6 +829,90 @@ code.hash {
 .clickable { cursor: pointer; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; display: inline-block; vertical-align: bottom; }
 hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+/* ── Modal ─────────────────────────────────────────────────────────────── */
+#modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+#modal-overlay.open { display: flex; }
+#modal {
+  background: var(--bg-2);
+  border: 1px solid var(--border-a);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 420px;
+  max-width: 95vw;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+.modal-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+.modal-field { margin-bottom: 14px; }
+.modal-field label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 5px;
+}
+.modal-field input,
+.modal-field select,
+.modal-field textarea {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  outline: none;
+  font-family: inherit;
+  font-size: 12px;
+  transition: border-color 0.15s;
+}
+.modal-field input:focus,
+.modal-field select:focus,
+.modal-field textarea:focus { border-color: var(--border-a); }
+.modal-field textarea { resize: vertical; min-height: 72px; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* ── Case card actions ─────────────────────────────────────────────────── */
+.case-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.case-note-form {
+  margin-top: 8px;
+  display: none;
+}
+.case-note-form.open { display: block; }
+.case-note-form textarea {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 11px;
+  resize: none;
+  height: 52px;
+  margin-bottom: 6px;
+}
 </style>
 </head>
 <body>
@@ -983,6 +1067,7 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
           <span class="text-muted" style="font-size:11px;" id="cases-count-label"></span>
           <div class="toolbar-right">
             <button class="btn btn-ghost btn-sm" onclick="loadAll()">↻ Refresh</button>
+            <button class="btn btn-primary btn-sm" onclick="openCreateCaseModal()">+ New Case</button>
           </div>
         </div>
         <div class="kanban-board" id="kanban-board"></div>
@@ -1072,6 +1157,15 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; 
 
 <!-- Toast container -->
 <div id="toast-container"></div>
+
+<!-- Modal -->
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div id="modal">
+    <div class="modal-title" id="modal-title">New Case</div>
+    <div id="modal-body"></div>
+    <div class="modal-actions" id="modal-actions"></div>
+  </div>
+</div>
 
 <script>
 'use strict';
@@ -1323,6 +1417,9 @@ function renderAlerts() {
               <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="gotoIntel('${a.src_ip}')">
                 🔍 Intel: ${a.src_ip}
               </button>
+              <button class="btn btn-yellow btn-sm" onclick="escalateToCase(${a.id},'${a.alert_type}','${a.src_ip||''}')">
+                ⬆ Escalate → Case
+              </button>
             </div>
           </div>
         </td>
@@ -1361,6 +1458,7 @@ function renderCases() {
 
   const cols = ['open','investigating','contained','closed'];
   const colColors = { open:'#ef4444', investigating:'#eab308', contained:'#38bdf8', closed:'#64748b' };
+  const nextStatus = { open:'investigating', investigating:'contained', contained:'closed' };
 
   document.getElementById('kanban-board').innerHTML = cols.map(col => {
     const colCases = cases.filter(c => c.status === col);
@@ -1372,21 +1470,173 @@ function renderCases() {
           <span class="kanban-col-count">${colCases.length}</span>
         </div>
         <div class="kanban-cards">
-          ${colCases.length ? colCases.map(c => `
-            <div class="case-card">
+          ${colCases.length ? colCases.map(c => {
+            const next = nextStatus[c.status];
+            const safeRef = c.case_ref.replace(/[^a-z0-9]/gi,'-');
+            return `
+            <div class="case-card" id="card-${safeRef}">
               <div class="case-ref">${c.case_ref}</div>
               <div class="case-title">${c.title}</div>
               <div class="case-footer">
                 ${sevBadge(c.severity)}
-                <span class="case-assigned text-mono text-muted" title="${c.assigned_to}">${
+                <span class="case-assigned text-mono text-muted" title="${c.assigned_to||''}">${
                   c.assigned_to ? c.assigned_to.split('@')[0] : 'unassigned'
                 }</span>
               </div>
-            </div>`).join('')
+              <div class="case-actions">
+                ${next ? `<button class="btn btn-ghost btn-sm" onclick="advanceCaseStatus('${c.case_ref}','${next}')">→ ${next}</button>` : ''}
+                <button class="btn btn-ghost btn-sm" onclick="openAssignModal('${c.case_ref}')">Assign</button>
+                <button class="btn btn-ghost btn-sm" onclick="toggleNoteForm('${safeRef}')">+ Note</button>
+              </div>
+              <div class="case-note-form" id="note-form-${safeRef}">
+                <textarea id="note-text-${safeRef}" placeholder="Analyst note…"></textarea>
+                <div style="display:flex;gap:6px">
+                  <button class="btn btn-primary btn-sm" onclick="submitNote('${c.case_ref}','${safeRef}')">Save</button>
+                  <button class="btn btn-ghost btn-sm" onclick="toggleNoteForm('${safeRef}')">Cancel</button>
+                </div>
+              </div>
+            </div>`;
+          }).join('')
           : '<div style="padding:12px;color:var(--text-3);font-size:11px;text-align:center">–</div>'}
         </div>
       </div>`;
   }).join('');
+}
+
+// ── Modal helpers ──────────────────────────────────────────────────────────
+function openModal(title, bodyHtml, actions) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('modal-actions').innerHTML = actions;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ── Create Case ────────────────────────────────────────────────────────────
+function openCreateCaseModal(prefill = {}) {
+  openModal(
+    'New Incident Case',
+    `<div class="modal-field">
+      <label>Title</label>
+      <input id="case-title" placeholder="e.g. SSH Brute Force — DC01" value="${prefill.title||''}">
+    </div>
+    <div class="modal-field">
+      <label>Severity</label>
+      <select id="case-severity">
+        ${['low','medium','high','critical'].map(s =>
+          `<option value="${s}" ${s===(prefill.severity||'medium')?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
+        ).join('')}
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>Assign To</label>
+      <input id="case-assign" placeholder="analyst@company.com" value="${prefill.assigned_to||''}">
+    </div>`,
+    `<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary btn-sm" onclick="submitCreateCase(${prefill.alertId||'null'})">Create Case</button>`
+  );
+  setTimeout(() => document.getElementById('case-title').focus(), 50);
+}
+
+async function submitCreateCase(alertId) {
+  const title   = document.getElementById('case-title').value.trim();
+  const severity = document.getElementById('case-severity').value;
+  const assignedTo = document.getElementById('case-assign').value.trim();
+  if (!title) { toast('Title is required', 'err'); return; }
+  try {
+    const c = await api('/api/v1/cases', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, severity, assigned_to: assignedTo }),
+    });
+    toast(`Case ${c.case_ref} created`, 'ok');
+    if (alertId) {
+      await api(`/api/v1/cases/${c.case_ref}/alerts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alert_id: alertId }),
+      });
+      toast(`Alert linked to ${c.case_ref}`, 'ok');
+    }
+    closeModal();
+    await loadAll();
+    navigate('cases');
+  } catch(e) { toast('Failed: ' + e.message, 'err'); }
+}
+
+// ── Escalate alert to case ─────────────────────────────────────────────────
+function escalateToCase(alertId, alertType, srcIp) {
+  openCreateCaseModal({
+    title: `${alertType}${srcIp ? ' — ' + srcIp : ''}`,
+    severity: 'high',
+    alertId,
+  });
+}
+
+// ── Advance case status ────────────────────────────────────────────────────
+async function advanceCaseStatus(caseRef, newStatus) {
+  try {
+    await api(`/api/v1/cases/${caseRef}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    toast(`${caseRef} → ${newStatus}`, 'ok');
+    await loadAll();
+  } catch(e) { toast('Failed: ' + e.message, 'err'); }
+}
+
+// ── Assign case modal ──────────────────────────────────────────────────────
+function openAssignModal(caseRef) {
+  openModal(
+    `Assign ${caseRef}`,
+    `<div class="modal-field">
+      <label>Analyst</label>
+      <input id="assign-analyst" placeholder="analyst@company.com">
+    </div>`,
+    `<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary btn-sm" onclick="submitAssign('${caseRef}')">Assign</button>`
+  );
+  setTimeout(() => document.getElementById('assign-analyst').focus(), 50);
+}
+
+async function submitAssign(caseRef) {
+  const analyst = document.getElementById('assign-analyst').value.trim();
+  if (!analyst) { toast('Analyst name required', 'err'); return; }
+  try {
+    await api(`/api/v1/cases/${caseRef}/assign`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assigned_to: analyst }),
+    });
+    toast(`${caseRef} assigned to ${analyst}`, 'ok');
+    closeModal();
+    await loadAll();
+  } catch(e) { toast('Failed: ' + e.message, 'err'); }
+}
+
+// ── Analyst notes ──────────────────────────────────────────────────────────
+function toggleNoteForm(safeRef) {
+  const form = document.getElementById('note-form-' + safeRef);
+  if (form) form.classList.toggle('open');
+}
+
+async function submitNote(caseRef, safeRef) {
+  const note = document.getElementById('note-text-' + safeRef).value.trim();
+  if (!note) { toast('Note cannot be empty', 'err'); return; }
+  try {
+    await api(`/api/v1/cases/${caseRef}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note, author: 'analyst' }),
+    });
+    toast('Note saved', 'ok');
+    toggleNoteForm(safeRef);
+    document.getElementById('note-text-' + safeRef).value = '';
+  } catch(e) { toast('Failed: ' + e.message, 'err'); }
 }
 
 // ── Events ─────────────────────────────────────────────────────────────────
