@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from intelligence.service_intelligence import get_service_risk
 from reporting.recommended_actions import generate_recommendations
 from reporting.executive_summary import ExecutiveSummary
+from reporting.navigator_export import NavigatorExport
 
 
 def _now_utc() -> str:
@@ -189,9 +190,13 @@ class ReportGenerator:
             executive_summary=executive_summary,
         )
 
+        run_id    = json_report.get("run_id", "")
+        navigator = NavigatorExport().build(alerts, run_id=run_id)
+
         return {
-            "json":     json_report,
-            "markdown": markdown_report,
+            "json":      json_report,
+            "markdown":  markdown_report,
+            "navigator": navigator,
         }
 
     # -----------------------------------------------------------------------

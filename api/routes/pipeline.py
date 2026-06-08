@@ -4,7 +4,10 @@ api/routes/pipeline.py — Pipeline execution and run history endpoints.
 
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, HTTPException, Query, status
+from fastapi.responses import Response
 
 from api.dependencies import Orchestrator, Store
 from api.schemas.requests import PipelineRunRequest, PurgeRequest
@@ -123,6 +126,46 @@ def get_run(run_id: str, store: Store) -> PipelineRunSummaryResponse:
         status=run.status,
         started_at=run.started_at,
         completed_at=run.completed_at,
+    )
+
+
+@router.get(
+    "/runs/{run_id}/navigator",
+    summary="Download ATT&CK Navigator layer for a pipeline run",
+    response_class=Response,
+)
+def get_navigator_layer(run_id: str, store: Store) -> Response:
+    """
+    Returns a MITRE ATT&CK Navigator 4.x layer JSON for the given run.
+    Import the downloaded file at https://mitre-attack.github.io/attack-navigator/
+    to visualise which techniques were observed.
+    """
+    run = store.audit.get_run(run_id)
+    if run is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run '{run_id}' not found.",
+        )
+
+    alerts = store.alerts.get_by_run(run_id)
+    alert_dicts = [
+        {
+            "alert_type":      a.alert_type,
+            "confidence":      a.confidence,
+            "mitre_technique": a.details.get("mitre_technique", ""),
+            "mitre_tactic":    a.mitre_tactic,
+        }
+        for a in alerts
+    ]
+
+    from reporting.navigator_export import NavigatorExport
+    layer = NavigatorExport().build(alert_dicts, run_id=run_id)
+
+    filename = f"sentinel-navigator-{run_id[:8]}.json"
+    return Response(
+        content=json.dumps(layer, indent=2),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
