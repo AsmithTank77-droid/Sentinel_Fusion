@@ -476,6 +476,6 @@ Sentinel_Fusion/
 ## Running Tests
 
 ```bash
-pytest tests/           # 972 tests, ~3s
+pytest tests/           # 1016 tests, ~4s
 pytest tests/ -v        # verbose output per test
 ```
