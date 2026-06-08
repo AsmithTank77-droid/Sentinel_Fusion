@@ -12,7 +12,7 @@
 
 Sentinel_Fusion is a 10-stage detection pipeline that ingests Nmap scans and Windows Event Logs, correlates them into attack chains, and produces structured JSON and Markdown SOC reports with host risk scores, MITRE ATT&CK mappings, WINLOG behavioral alerts, per-service triage recommendations, and proactive cross-run threat hunting.
 
-**v3 adds:** Elasticsearch SIEM integration, MITRE ATT&CK Navigator layer export, and live threat feed ingestion (abuse.ch Feodo Tracker, Emerging Threats, AlienVault OTX).
+**v3 adds:** Elasticsearch SIEM integration, MITRE ATT&CK Navigator layer export, live threat feed ingestion (abuse.ch Feodo Tracker, Emerging Threats, AlienVault OTX), directory-based live watch mode, and outbound webhook alerting.
 
 Incorporates the full logic of:
 - **nmap-recon-analyzer** — Nmap XML parsing, service risk scoring, CVE mapping, SOC triage recommendations
@@ -179,6 +179,31 @@ SENTINEL_FEEDS_ENABLED=true
 SENTINEL_OTX_KEY=your-key   # optional
 ```
 
+### Directory Watch Mode
+Drop any JSON file into a monitored directory and the pipeline runs automatically — no manual submission required. Files are classified by name prefix (`winlog_*` → winlog, `nra_*` → nra, everything else → mock). Handles multiple files per cycle and merges events by source type.
+
+```bash
+# Start watching a directory
+sentinel watch --dir ./incoming --interval 5
+
+# In another terminal — drop a file in and watch alerts fire
+cp data/samples/windows_log.json incoming/winlog_live.json
+
+# Run the full live demo (simulates brute force → scan → lateral movement)
+bash scripts/demo_watch.sh
+```
+
+### Webhook Alerting
+Every high-confidence alert triggers an outbound POST to a configurable webhook URL. Works with Slack incoming webhooks, PagerDuty Events API, Microsoft Teams, or any HTTP receiver. Individual send failures are swallowed — a broken webhook never affects the pipeline result.
+
+```bash
+# Slack example
+SENTINEL_WEBHOOK_URL=https://hooks.slack.com/services/xxx/yyy/zzz
+SENTINEL_WEBHOOK_CONFIDENCE_FLOOR=0.7   # only alert on high-confidence detections
+```
+
+Payload includes: `run_id`, `alert_type`, `confidence`, `src_ip`, `dst_ip`, `severity`, `mitre_tactic`, `mitre_technique`, `timestamp`.
+
 ---
 
 ## Detection Capabilities
@@ -329,6 +354,9 @@ Sentinel_Fusion/
 ├── siem/                           # SIEM integrations
 │   └── elastic_forwarder.py        # Elasticsearch forwarder — alerts, scores, hunt findings
 │
+├── notifications/                  # Outbound alerting
+│   └── webhook.py                  # Webhook notifier — Slack, PagerDuty, Teams, generic HTTP
+│
 ├── intelligence/                   # Enrichment data providers (called by enrich.py)
 │   ├── _http.py                    # Shared stdlib HTTP helper for live API calls
 │   ├── ip_reputation.py            # IP reputation: seed table → AbuseIPDB → stub fallback
@@ -383,10 +411,13 @@ Sentinel_Fusion/
 │       ├── sample_report.json      # Full pipeline output (JSON)
 │       └── sample_report.md        # Full pipeline output (Markdown)
 │
+├── incoming/                       # Drop zone for sentinel watch --dir mode
+│
 ├── scripts/                        # Shell helper scripts
 │   ├── run_demo.sh
 │   ├── simulate_attack.sh
-│   └── generate_report.sh
+│   ├── generate_report.sh
+│   └── demo_watch.sh               # Live watch demo — simulates brute force → scan → lateral movement
 │
 ├── tests/                          # Pytest test suite
 │   ├── test_ingest.py
@@ -420,11 +451,15 @@ Sentinel_Fusion/
 │   ├── test_cli.py
 │   ├── test_watch.py               # FileCursor and watch cycle tests
 │   ├── test_elastic_forwarder.py   # Elasticsearch SIEM forwarding
-│   └── test_navigator_export.py    # MITRE ATT&CK Navigator layer export
+│   ├── test_navigator_export.py    # MITRE ATT&CK Navigator layer export
+│   └── test_webhook.py             # Webhook alerting — payload, confidence floor, failure handling
 │
 ├── docs/
 │   ├── ARCHITECTURE.md             # Full system architecture design document
-│   └── SENTINEL_FUSION_GUIDE.md    # Complete module-by-module study guide
+│   ├── SENTINEL_FUSION_GUIDE.md    # Complete module-by-module study guide
+│   ├── DECISIONS.md                # Architecture decision record — why every major choice was made
+│   ├── linkedin_v2.md              # LinkedIn post — v2 announcement
+│   └── linkedin_v3.md              # LinkedIn post — v3 announcement
 ├── sentinel.db                     # SQLite database (runtime artifact, gitignored)
 ├── Dockerfile
 ├── docker-compose.yml
