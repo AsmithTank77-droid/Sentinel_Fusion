@@ -1,18 +1,19 @@
-I just shipped v3 of Sentinel_Fusion.
+I'm just starting out in cybersecurity but I've been building something I'm really proud of.
 
-For those who haven't seen it — it's a 10-stage SOC detection pipeline I built from scratch in Python. It ingests Nmap scans and Windows Event Logs, correlates them into attack chains, scores host risk, and spits out structured SOC reports with MITRE ATT&CK mappings.
+It's called Sentinel_Fusion — a 10-stage SOC detection pipeline I built from scratch in Python. It takes in Nmap scans and Windows Event Logs, figures out what's going on across them, and produces SOC reports with MITRE ATT&CK mappings and host risk scores. Basically everything a SOC analyst would need to start investigating.
 
-v3 adds three things I've wanted in it for a while:
+I just dropped v3 and added three new features:
 
-1. Elasticsearch SIEM Integration — every pipeline run now forwards alerts, host risk scores, and hunt findings to Elasticsearch automatically. Hook up Kibana and you've got a live SOC dashboard. No external Python dependencies, just stdlib.
+1. Elasticsearch integration — the pipeline now sends all its alerts and findings to Elasticsearch after every run. Connect Kibana and you have an actual SOC dashboard.
 
-2. MITRE ATT&CK Navigator Export — one API call gives you a full Navigator layer JSON with techniques color-coded by detection confidence. You can drop it straight into the Navigator and see exactly what your detections cover.
+2. MITRE ATT&CK Navigator export — you can download a Navigator layer straight from the API and see your detection coverage mapped out visually. That one was really cool to build.
 
-3. Live Threat Feed Ingestion — instead of just static seed data, it now pulls from abuse.ch Feodo Tracker and Emerging Threats in real time, with AlienVault OTX as a fallback for per-IP lookups. If a feed goes down it fails gracefully and the pipeline keeps running.
+3. Live threat feed ingestion — instead of hardcoded data it now pulls live blocklists from abuse.ch and Emerging Threats, with AlienVault OTX as a backup. If the feeds go down the pipeline just keeps going.
 
-972 tests passing. Built it to show what a detection pipeline actually looks like end to end — not just scripts, but a real system with an API, a storage layer, and proper test coverage.
+972 tests passing across the whole project.
 
-If you're studying for a blue-team cert, building a home SOC lab, or just want to see how something like this is structured, the full repo is here:
+I built this to learn how detection pipelines actually work under the hood and to have something real to show. I'm looking for junior SOC analyst and blue team roles — if you know of anything or just want to check out the project, the repo is here:
+
 https://github.com/AsmithTank77-droid/Sentinel_Fusion
 
-#cybersecurity #blueteam #SOC #SIEM #MITRE #threathunting #python #infosec
+#cybersecurity #blueteam #SOC #SIEM #MITRE #infosec #python #opentowork
