@@ -268,6 +268,7 @@ class PipelineOrchestrator:
         }
 
         self._forward_to_siem(result, trace)
+        self._notify_webhook(result, trace)
 
         return result
 
@@ -629,6 +630,32 @@ class PipelineOrchestrator:
             raise
         except Exception as exc:
             raise PipelineStageError(STAGE, exc) from exc
+
+    # ------------------------------------------------------------------
+    # Webhook alerting (non-fatal post-pipeline step)
+    # ------------------------------------------------------------------
+
+    def _notify_webhook(self, result: dict, trace: list[dict]) -> None:
+        """
+        Send webhook notifications for high-confidence alerts if SENTINEL_WEBHOOK_URL is set.
+        Never raises — a webhook failure must not break the pipeline.
+        """
+        try:
+            from config.settings import settings
+            if not settings.webhook_url:
+                return
+            from notifications.webhook import WebhookNotifier
+            notifier = WebhookNotifier(
+                url=settings.webhook_url,
+                confidence_floor=settings.webhook_confidence_floor,
+                timeout=settings.intel_timeout,
+            )
+            run_id  = result.get("report", {}).get("json", {}).get("run_id", "")
+            alerts  = result.get("alerts") or []
+            outcome = notifier.notify(alerts, run_id=run_id)
+            trace.append({"stage": "webhook", "status": "ok", **outcome})
+        except Exception as exc:
+            trace.append({"stage": "webhook", "status": "error", "error": str(exc)})
 
     # ------------------------------------------------------------------
     # SIEM forwarding (non-fatal post-pipeline step)

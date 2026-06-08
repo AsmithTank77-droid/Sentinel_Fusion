@@ -271,6 +271,29 @@ class Settings(BaseSettings):
     )
 
     # ------------------------------------------------------------------
+    # Webhook alerting
+    # ------------------------------------------------------------------
+
+    webhook_url: str = Field(
+        default="",
+        description=(
+            "Webhook endpoint for outbound alert notifications. "
+            "Supports Slack incoming webhooks, PagerDuty, Teams, or any HTTP receiver. "
+            "Empty string disables webhook alerting. Set SENTINEL_WEBHOOK_URL to enable."
+        ),
+    )
+
+    webhook_confidence_floor: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description=(
+            "Minimum alert confidence (0–1) required to trigger a webhook notification. "
+            "Alerts below this threshold are still stored but not forwarded."
+        ),
+    )
+
+    # ------------------------------------------------------------------
     # Elasticsearch SIEM integration
     # ------------------------------------------------------------------
 
