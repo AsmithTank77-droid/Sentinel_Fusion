@@ -85,7 +85,7 @@ def _hunt_low_and_slow_brute_force(store) -> list[dict]:
     """
     findings: list[dict] = []
 
-    auth_failures = store.events.get_by_event_type("auth_failure", limit=2000)
+    auth_failures = store.events.get_by_event_type("authentication_failure", limit=2000)
     if not auth_failures:
         return findings
 
@@ -198,10 +198,14 @@ def _hunt_beacon(store) -> list[dict]:
     if not recent_events:
         return findings
 
-    # Group by (src_ip, dst_ip) → set of run_ids
+    _PRIVATE = ("10.", "192.168.", "172.", "127.", "::1")
+
+    # Group by (src_ip, dst_ip) → set of run_ids; skip internal src IPs
     pair_runs: dict[tuple[str, str], set[str]] = defaultdict(set)
     for ev in recent_events:
         if ev.src_ip and ev.dst_ip:
+            if any(ev.src_ip.startswith(p) for p in _PRIVATE):
+                continue
             pair_runs[(ev.src_ip, ev.dst_ip)].add(ev.run_id)
 
     for (src_ip, dst_ip), run_ids in pair_runs.items():

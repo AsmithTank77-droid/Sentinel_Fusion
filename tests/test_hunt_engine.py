@@ -71,7 +71,7 @@ class _Store:
 
 def _make_auth_failures(src_ip, run_ids, count_per_run=2):
     return [
-        _Ev(src_ip, "10.0.0.1", "auth_failure", run_id)
+        _Ev(src_ip, "10.0.0.1", "authentication_failure", run_id)
         for run_id in run_ids
         for _ in range(count_per_run)
     ]
@@ -386,7 +386,7 @@ class TestHuntEngineIntegration:
         # Low-and-slow BF
         bf_ip = "1.1.1.1"
         bf_events = [
-            _Ev(bf_ip, "10.0.0.1", "auth_failure", f"run-{i}")
+            _Ev(bf_ip, "10.0.0.1", "authentication_failure", f"run-{i}")
             for i in range(_SLOW_BF_MIN_RUNS)
             for _ in range(2)
         ]
