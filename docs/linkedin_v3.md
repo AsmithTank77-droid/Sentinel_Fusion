@@ -26,6 +26,7 @@ Three-tier enrichment: seed table (instant) → live blocklists (abuse.ch Feodo 
 
 **Stack:** Python · FastAPI · SQLite · Elasticsearch · ATT&CK Navigator · Docker
 
-The project is fully open source. If you're building a home SOC lab, studying for a blue-team cert, or just curious how detection pipelines work end to end — the repo is on GitHub.
+The project is fully open source. If you're building a home SOC lab, studying for a blue-team cert, or just curious how detection pipelines work end to end — the repo is here:
+https://github.com/AsmithTank77-droid/Sentinel_Fusion
 
 #cybersecurity #blueteam #SIEM #MITRE #threathunting #python #SOC #infosec #opensourcetools
