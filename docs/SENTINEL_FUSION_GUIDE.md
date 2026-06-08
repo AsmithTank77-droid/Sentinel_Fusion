@@ -11,16 +11,18 @@
 3. [Stage 1 — Ingest](#3-stage-1--ingest)
 4. [Stage 2 — Normalize](#4-stage-2--normalize)
 5. [Stage 3 — Enrich](#5-stage-3--enrich)
-6. [Stage 4 — Correlate](#6-stage-4--correlate)
-7. [Stage 5 — Detect](#7-stage-5--detect)
-8. [Stage 6 — Score](#8-stage-6--score)
-9. [Stage 7 — Timeline](#9-stage-7--timeline)
-10. [Stage 8 — Report](#10-stage-8--report)
-11. [The Intelligence Layer](#11-the-intelligence-layer)
-12. [The Storage Layer](#12-the-storage-layer)
-13. [The REST API](#13-the-rest-api)
-14. [The CLI and Watch Mode](#14-the-cli-and-watch-mode)
-15. [Design Philosophy and Hard Rules](#15-design-philosophy-and-hard-rules)
+6. [Stage 4 — Sigma](#6-stage-4--sigma)
+7. [Stage 5 — Correlate](#7-stage-5--correlate)
+8. [Stage 6 — Detect](#8-stage-6--detect)
+9. [Stage 7 — Score](#9-stage-7--score)
+10. [Stage 8 — Timeline](#10-stage-8--timeline)
+11. [Stage 9 — Report](#11-stage-9--report)
+12. [Stage 10 — Hunt](#12-stage-10--hunt)
+13. [The Intelligence Layer](#13-the-intelligence-layer)
+14. [The Storage Layer](#14-the-storage-layer)
+15. [The REST API](#15-the-rest-api)
+16. [The CLI and Watch Mode](#16-the-cli-and-watch-mode)
+17. [Design Philosophy and Hard Rules](#17-design-philosophy-and-hard-rules)
 
 ---
 
@@ -87,12 +89,12 @@ def analyze(nmap_file, winlog_file):
 
 This is fast to write and terrible to maintain. Why? Because every concern is mixed together. If you want to change how you score hosts, you have to understand how parsing works. If you want to add a new data source, you have to understand the reporting format. Testing is nearly impossible.
 
-### The right way: a strict 8-stage pipeline
+### The right way: a strict 10-stage pipeline
 
 Sentinel_Fusion uses a **directed acyclic pipeline** where each stage has a single responsibility:
 
 ```
-Raw Files → [Ingest] → [Normalize] → [Enrich] → [Correlate] → [Detect] → [Score] → [Timeline] → [Report] → Output
+Raw Files → [Ingest] → [Normalize] → [Enrich] → [Sigma] → [Correlate] → [Detect] → [Score] → [Timeline] → [Report] → [Hunt] → Output
 ```
 
 The key constraint: **no stage may be skipped and no stage may access the output of a later stage.**
@@ -111,7 +113,7 @@ This is enforced architecturally. The orchestrator (`core/pipeline/orchestrator.
 
 ### The orchestrator: the conductor
 
-`core/pipeline/orchestrator.py` is the only file that knows about all 8 stages. It calls them in order, passes outputs from one to the next, handles errors at each stage, and calls the storage layer to persist the final result. Nothing else in the codebase orchestrates the pipeline — this is a hard architectural rule.
+`core/pipeline/orchestrator.py` is the only file that knows about all 10 stages. It calls them in order, passes outputs from one to the next, handles errors at each stage, and calls the storage layer to persist the final result. Nothing else in the codebase orchestrates the pipeline — this is a hard architectural rule.
 
 ---
 
@@ -245,7 +247,21 @@ This means the pipeline works perfectly offline (for testing and air-gapped envi
 
 ---
 
-## 6. Stage 4 — Correlate
+## 6. Stage 4 — Sigma
+
+**Modules**: `detection/sigma_engine.py`, `detection/sigma_field_mapper.py`
+**Input**: Enriched event dicts
+**Output**: `list[dict]` — Sigma rule match alerts
+
+The `SigmaEngine` evaluates 10 MITRE ATT&CK-mapped Sigma-compatible rules against enriched events. `sigma_field_mapper.py` first translates normalized field names into Sigma-compatible names so that rule conditions can match correctly. Each matched rule produces a confidence-scored alert dict with `alert_type`, `mitre_tactic`, `mitre_technique`, `severity`, and a human-readable `reason`.
+
+The 10 built-in rules cover: LOLBin abuse, WMI child process spawning, encoded PowerShell, PowerShell download cradle, LSASS memory access, PsExec lateral movement, shadow copy deletion, WMI persistence, network share enumeration, and scheduled task creation.
+
+Sigma alerts are pooled with correlated chain alerts (Stage 5) before the stateless detectors run (Stage 6).
+
+---
+
+## 7. Stage 5 — Correlate
 
 **Module**: `detection/correlation_engine.py`  
 **Input**: Enriched `NormalizedEvent` objects  
@@ -303,7 +319,7 @@ This is the kind of detection that separates a tool from a platform.
 
 ---
 
-## 7. Stage 5 — Detect
+## 8. Stage 6 — Detect
 
 **Modules**: `detection/brute_force_detection.py`, `detection/lateral_movement_detection.py`, `detection/anomaly_detection.py`, `detection/winlog_rules.py`  
 **Input**: Enriched events + correlated attack chains  
@@ -394,7 +410,7 @@ This prevents the analyst from seeing 5 "brute force" alerts for the same attack
 
 ---
 
-## 8. Stage 6 — Score
+## 9. Stage 7 — Score
 
 **Modules**: `scoring/host_risk.py`, `scoring/asset_risk.py`, `scoring/attack_surface.py`  
 **Input**: Enriched events + alerts  
@@ -446,7 +462,7 @@ This gives the CISO a single number representing the overall network exposure.
 
 ---
 
-## 9. Stage 7 — Timeline
+## 10. Stage 8 — Timeline
 
 **Modules**: `narrative/timeline_builder.py`, `narrative/attack_story_engine.py`  
 **Input**: Enriched events + alerts + scores  
@@ -479,7 +495,7 @@ This narrative is included in the executive summary and is what gets handed to a
 
 ---
 
-## 10. Stage 8 — Report
+## 11. Stage 9 — Report
 
 **Modules**: `reporting/report_generator.py`, `reporting/executive_summary.py`, `reporting/recommended_actions.py`  
 **Input**: Everything — events, alerts, scores, timeline, narrative  
@@ -548,7 +564,26 @@ This is the NRA (Network Reconnaissance Analyzer) output — the part of Sentine
 
 ---
 
-## 11. The Intelligence Layer
+## 12. Stage 10 — Hunt
+
+**Module**: `hunting/hunt_engine.py`
+**Input**: `StorageLayer` — queries aggregated data across all prior pipeline runs
+**Output**: `list[dict]` — hunt findings appended to `hunt_findings` in the pipeline result
+
+The `HuntEngine` runs four cross-run strategies against the database. Individual pipeline runs see only the current event batch; the hunt stage sees everything across all runs, making it the only component that can surface low-and-slow attack patterns.
+
+| Strategy | What it finds | Threshold |
+|----------|---------------|-----------|
+| `low_and_slow_brute_force` | Same src_ip with auth failures across 3+ runs, each below the live threshold | 3 runs, <5/run |
+| `alert_cluster` | Same src_ip with 3+ open alerts collectively significant but individually dismissed | 3 open alerts |
+| `beacon` | Same (src_ip → dst_ip) pair in 5+ separate runs — consistent with C2 check-in | 5 runs |
+| `persistent_threat_actor` | Same external src_ip appearing in events across 5+ runs | 5 runs |
+
+Each finding includes `hunt_confidence`, MITRE tactic, `run_count`, an `evidence` dict, and a plain-English `analyst_note`. If `store` is `None`, returns `[]` immediately so the orchestrator can safely call this stage in test environments.
+
+---
+
+## 13. The Intelligence Layer
 
 **Modules**: `intelligence/service_intelligence.py`, `intelligence/event_intelligence.py`, `intelligence/ip_reputation.py`, `intelligence/geo_enrichment.py`, `intelligence/threat_feeds.py`, `intelligence/_http.py`
 
@@ -613,7 +648,7 @@ All live intelligence modules use this helper. When it raises `IntelHttpError`, 
 
 ---
 
-## 12. The Storage Layer
+## 14. The Storage Layer
 
 **Modules**: `storage/database.py`, `storage/schema.py`, `storage/models.py`, `storage/store.py`, `storage/repositories/`
 
@@ -657,7 +692,7 @@ Each entity type has its own repository module (`storage/repositories/events.py`
 
 ---
 
-## 13. The REST API
+## 15. The REST API
 
 **Modules**: `api/app.py`, `api/dependencies.py`, `api/routes/`, `api/schemas/`
 
@@ -706,7 +741,7 @@ At least one of these must be non-empty — the API validates this and returns a
 
 ---
 
-## 14. The CLI and Watch Mode
+## 16. The CLI and Watch Mode
 
 **Modules**: `interface/cli.py`, `interface/commands/`, `interface/banner.py`, `interface/output.py`
 
@@ -779,7 +814,7 @@ Each watch cycle calls `_run_watch_cycle(cursors, db_path, cycle_n)`:
 
 1. Poll all cursors for new events
 2. If no new events → return None (don't run the pipeline)
-3. If new events → run the full 8-stage pipeline against just the new events
+3. If new events → run the full 10-stage pipeline against just the new events
 4. Persist the result to the database
 5. Print a Rich-formatted summary table to the terminal
 6. Return the pipeline result
@@ -788,14 +823,14 @@ The interval between cycles is configurable via `--interval` (default: 10 second
 
 ---
 
-## 15. Design Philosophy and Hard Rules
+## 17. Design Philosophy and Hard Rules
 
 ### The 10 hard constraints
 
 These are the rules that cannot be violated without fundamentally breaking the system's reliability:
 
 **1. No stage may be skipped or reordered.**  
-The 8-stage pipeline is sequential by design. The orchestrator enforces this. If you bypass the pipeline for "performance" you lose testability, debuggability, and the guarantee that data has been normalized before detection.
+The 10-stage pipeline is sequential by design. The orchestrator enforces this. If you bypass the pipeline for "performance" you lose testability, debuggability, and the guarantee that data has been normalized before detection.
 
 **2. `StorageLayer.persist_run()` is the only write entrypoint for complete runs.**  
 All 6 entity types (events, alerts, scores, cases, audit entries, run metadata) must be written atomically. If you write them individually, you get inconsistent state.
@@ -857,24 +892,28 @@ core/pipeline/
   normalize.py              ← Stage 2: unified NormalizedEvent schema
   enrich.py                 ← Stage 3: IP rep, geo, service context
   context_builder.py        ← Per-host context assembly
-  orchestrator.py           ← Drives the full 8-stage run
+  orchestrator.py           ← Drives the full 10-stage run
 detection/
-  correlation_engine.py     ← Stage 4: attack chains + pivot detection
-  brute_force_detection.py  ← Stage 5: rate-based brute force
-  lateral_movement_detection.py ← Stage 5: multi-target detection
-  anomaly_detection.py      ← Stage 5: statistical outliers
-  winlog_rules.py           ← Stage 5: 9 WINLOG behavioral rules
+  sigma_engine.py           ← Stage 4: 10 MITRE-mapped Sigma-compatible rules
+  sigma_field_mapper.py     ← Stage 4: maps Sigma field names to normalized schema
+  correlation_engine.py     ← Stage 5: attack chains + pivot detection
+  brute_force_detection.py  ← Stage 6: rate-based brute force
+  lateral_movement_detection.py ← Stage 6: multi-target detection
+  anomaly_detection.py      ← Stage 6: statistical outliers
+  winlog_rules.py           ← Stage 6: 9 WINLOG behavioral rules
 scoring/
-  host_risk.py              ← Stage 6: 4-component NRA host score (0–10)
-  asset_risk.py             ← Stage 6: per-port asset score
-  attack_surface.py         ← Stage 6: network-wide exposure metric
+  host_risk.py              ← Stage 7: 4-component NRA host score (0–10)
+  asset_risk.py             ← Stage 7: per-port asset score
+  attack_surface.py         ← Stage 7: network-wide exposure metric
 narrative/
-  timeline_builder.py       ← Stage 7: chronological event ordering
-  attack_story_engine.py    ← Stage 7: analyst narrative text
+  timeline_builder.py       ← Stage 8: chronological event ordering
+  attack_story_engine.py    ← Stage 8: analyst narrative text
 reporting/
-  report_generator.py       ← Stage 8: JSON + Markdown output
-  executive_summary.py      ← Stage 8: verdict, key findings, actions
-  recommended_actions.py    ← Stage 8: per-port SOC triage (NRA)
+  report_generator.py       ← Stage 9: JSON + Markdown output
+  executive_summary.py      ← Stage 9: verdict, key findings, actions
+  recommended_actions.py    ← Stage 9: per-port SOC triage (NRA)
+hunting/
+  hunt_engine.py            ← Stage 10: cross-run proactive threat hunting
 intelligence/
   service_intelligence.py   ← Network service knowledge base (30+ protocols)
   event_intelligence.py     ← Windows Event ID knowledge base

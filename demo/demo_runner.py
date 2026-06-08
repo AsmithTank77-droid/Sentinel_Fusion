@@ -2,9 +2,9 @@
 demo/demo_runner.py — Full end-to-end SOC pipeline demonstration.
 
 Simulates a realistic multi-stage cyber attack and runs it through the
-complete Sentinel_Fusion 8-stage pipeline:
+complete Sentinel_Fusion 10-stage pipeline:
 
-    ingest → normalize → enrich → correlate → detect → score → timeline → report
+    ingest → normalize → enrich → sigma → correlate → detect → score → timeline → report → hunt
 
 Attack scenario:
     Attacker:   185.220.101.45  (Russian TOR exit node, known malicious)

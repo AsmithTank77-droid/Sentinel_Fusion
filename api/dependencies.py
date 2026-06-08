@@ -3,7 +3,7 @@ api/dependencies.py — FastAPI dependency injection for shared resources.
 
 Exposes two module-level singletons initialised by the app lifespan:
     StorageLayer      — SQLite persistence facade
-    PipelineOrchestrator — stateless 8-stage pipeline runner
+    PipelineOrchestrator — stateless 10-stage pipeline runner
 
 Route files import the Annotated type aliases (Store, Orchestrator) for
 clean, zero-boilerplate dependency injection via FastAPI's Depends().

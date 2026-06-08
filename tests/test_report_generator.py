@@ -1,4 +1,4 @@
-"""Tests for reporting/report_generator.py — Stage 8."""
+"""Tests for reporting/report_generator.py — Stage 9."""
 
 import sys
 import os

@@ -16,11 +16,13 @@
    - [Stage 1 — Ingest](#stage-1--ingest)
    - [Stage 2 — Normalize](#stage-2--normalize)
    - [Stage 3 — Enrich](#stage-3--enrich)
-   - [Stage 4 — Correlate](#stage-4--correlate)
-   - [Stage 5 — Detect](#stage-5--detect)
-   - [Stage 6 — Score](#stage-6--score)
-   - [Stage 7 — Timeline](#stage-7--timeline)
-   - [Stage 8 — Report](#stage-8--report)
+   - [Stage 4 — Sigma](#stage-4--sigma)
+   - [Stage 5 — Correlate](#stage-5--correlate)
+   - [Stage 6 — Detect](#stage-6--detect)
+   - [Stage 7 — Score](#stage-7--score)
+   - [Stage 8 — Timeline](#stage-8--timeline)
+   - [Stage 9 — Report](#stage-9--report)
+   - [Stage 10 — Hunt](#stage-10--hunt)
 6. [Telemetry Sources](#6-telemetry-sources)
    - [Network Telemetry (NRA)](#network-telemetry-nra)
    - [Host Telemetry (Windows Event Logs)](#host-telemetry-windows-event-logs)
@@ -42,7 +44,7 @@
 
 ## 1. System Purpose
 
-Sentinel_Fusion is a SOC detection and correlation engine. It ingests heterogeneous security telemetry, runs it through a strict 8-stage processing pipeline, and produces structured outputs that give SOC analysts a complete, explainable picture of observed activity — including host risk scores, attack chains, MITRE ATT&CK mappings, Windows behavioral alerts, and per-service triage recommendations.
+Sentinel_Fusion is a SOC detection and correlation engine. It ingests heterogeneous security telemetry, runs it through a strict 10-stage processing pipeline, and produces structured outputs that give SOC analysts a complete, explainable picture of observed activity — including host risk scores, attack chains, MITRE ATT&CK mappings, Windows behavioral alerts, and per-service triage recommendations.
 
 The system was built by fusing two existing analyzers:
 
@@ -228,7 +230,17 @@ Rules for enrichment modules:
 
 ---
 
-### Stage 4 — Correlate
+### Stage 4 — Sigma
+
+**Modules:** `detection/sigma_engine.py`, `detection/sigma_field_mapper.py`
+**Input:** `list[dict]` — enriched events serialized via `to_dict()`
+**Output:** `list[dict]` — Sigma rule match alert dicts
+
+The `SigmaEngine` evaluates a curated set of 10 MITRE-mapped Sigma-compatible rules against enriched event dicts. `sigma_field_mapper.py` translates normalized event fields into Sigma-compatible field names before evaluation. Each matched rule produces an alert dict consistent with other Sentinel_Fusion detectors, including `alert_type`, `confidence`, `mitre_tactic`, `mitre_technique`, and `reason`.
+
+---
+
+### Stage 5 — Correlate
 
 **Module:** `detection/correlation_engine.py`  
 **Input:** `list[dict]` (enriched events serialized via `to_dict()`)  
@@ -251,10 +263,10 @@ Chain confidence increases with stage depth and event count. Each chain alert in
 
 ---
 
-### Stage 5 — Detect
+### Stage 6 — Detect
 
 **Modules:** `detection/brute_force_detection.py`, `detection/lateral_movement_detection.py`, `detection/anomaly_detection.py`, `detection/winlog_rules.py`  
-**Input:** Enriched event dicts + correlated chain alerts from Stage 4  
+**Input:** Enriched event dicts + correlated chain alerts from Stage 5  
 **Output:** `list[dict]` — detection alerts, each with a confidence score (0–1)
 
 All detectors are stateless. Each receives the full event set and produces zero or more alerts. Alerts include:
@@ -269,7 +281,7 @@ Detectors are described in detail in [§7 Detection Engineering](#7-detection-en
 
 ---
 
-### Stage 6 — Score
+### Stage 7 — Score
 
 **Modules:** `scoring/host_risk.py`, `scoring/asset_risk.py`, `scoring/attack_surface.py`  
 **Input:** Enriched events, detection alerts  
@@ -279,7 +291,7 @@ Scoring is described in detail in [§8 Risk Scoring Model](#8-risk-scoring-model
 
 ---
 
-### Stage 7 — Timeline
+### Stage 8 — Timeline
 
 **Module:** `narrative/timeline_builder.py`  
 **Input:** Enriched events, detection alerts, scores  
@@ -291,7 +303,7 @@ The `AttackStoryEngine` is called exclusively from `TimelineBuilder` — never f
 
 ---
 
-### Stage 8 — Report
+### Stage 9 — Report
 
 **Module:** `reporting/report_generator.py`  
 **Input:** Timeline, scores, alerts, normalized events  
@@ -304,7 +316,7 @@ The report generator produces two output formats simultaneously:
 
 The `normalized_events` parameter is required to reconstruct NRA port data for the recommended actions engine, because `timeline_builder` strips `source_type` from timeline entries.
 
-Internal call sequence within Stage 8:
+Internal call sequence within Stage 9:
 ```
 report_generator.generate()
     ├── _build_nra_scan_data(normalized_events, host_risk)
@@ -312,6 +324,25 @@ report_generator.generate()
     ├── ExecutiveSummary().generate(...)              # reporting/executive_summary.py
     └── _build_markdown(...)
 ```
+
+---
+
+### Stage 10 — Hunt
+
+**Module:** `hunting/hunt_engine.py`
+**Input:** `StorageLayer` — queries aggregated data across all prior pipeline runs
+**Output:** `list[dict]` — hunt findings, each with `hunt_type`, `hunt_confidence`, MITRE tactic, `run_count`, `evidence`, and `analyst_note`
+
+The `HuntEngine` runs four cross-run strategies that surface low-and-slow patterns invisible to the per-run pipeline:
+
+| Strategy | Signal | Threshold |
+|----------|--------|-----------|
+| `low_and_slow_brute_force` | Auth failures from same src_ip across 3+ runs, each below the live BF threshold | 3 runs, <5 failures/run |
+| `alert_cluster` | Same src_ip with 3+ open alerts across runs | 3 open alerts |
+| `beacon` | Same (src_ip → dst_ip) pair across 5+ separate runs | 5 runs |
+| `persistent_threat_actor` | Same external src_ip in events across 5+ runs | 5 runs |
+
+If `store` is `None`, returns `[]` immediately so the orchestrator can call this stage safely in test environments without a database.
 
 ---
 
@@ -368,7 +399,7 @@ Sentinel_Fusion ingests Windows Security Event Logs to detect behavioral indicat
 
 ### Correlation Engine
 
-The correlation engine (Stage 4) is the first detection layer. It operates on the full event set and identifies multi-source, multi-stage attack chains before any individual detector runs.
+The correlation engine (Stage 5) is the first detection layer. It operates on the full event set and identifies multi-source, multi-stage attack chains before any individual detector runs.
 
 **Chain construction:**
 1. Group all events by `src_ip`
@@ -387,7 +418,7 @@ confidence = min(base_confidence + boost, 1.0)
 
 ### Stateless Detectors
 
-All detectors in Stage 5 operate independently on the same event set. They cannot share state and cannot call each other.
+All detectors in Stage 6 operate independently on the same event set. They cannot share state and cannot call each other.
 
 | Detector | Module | Detection method |
 |----------|--------|-----------------|
@@ -614,7 +645,7 @@ StorageLayer (store.py)
 
 ### Request/Response
 
-`POST /api/v1/pipeline/run` accepts a JSON body with event arrays in the normalized event schema. It runs the full 8-stage pipeline synchronously and returns the complete report JSON plus a run ID.
+`POST /api/v1/pipeline/run` accepts a JSON body with event arrays in the normalized event schema. It runs the full 10-stage pipeline synchronously and returns the complete report JSON plus a run ID.
 
 All list endpoints support pagination (`limit`, `offset`) and filtering parameters defined in `api/schemas/requests.py`.
 
@@ -700,7 +731,7 @@ orchestrator.py
 
 These rules are enforced across the codebase and must not be violated by new contributions:
 
-1. **Pipeline order is strict.** No stage may be skipped or reordered. The 8-stage sequence is an invariant.
+1. **Pipeline order is strict.** No stage may be skipped or reordered. The 10-stage sequence is an invariant.
 
 2. **Normalization is a one-way gate.** Raw source data never passes beyond `normalize.py`. All downstream modules work against `NormalizedEvent` or its dict serialization.
 

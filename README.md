@@ -264,16 +264,16 @@ Sentinel_Fusion/
 │   ├── lateral_movement_detection.py  # Stage 6
 │   └── winlog_rules.py             # Stage 6 — 9 behavioral rules (brute force, lateral movement, persistence, etc.)
 │
-├── scoring/                        # Stage 6 — risk scoring
+├── scoring/                        # Stage 7 — risk scoring
 │   ├── host_risk.py
 │   ├── asset_risk.py
 │   └── attack_surface.py
 │
-├── narrative/                      # Stage 7 — timeline and story engine
+├── narrative/                      # Stage 8 — timeline and story engine
 │   ├── timeline_builder.py         # Builds chronological attack timeline
 │   └── attack_story_engine.py      # Converts detections into SOC narratives
 │
-├── reporting/                      # Stage 8 — output generation
+├── reporting/                      # Stage 9 — output generation
 │   ├── report_generator.py         # JSON and Markdown report builder
 │   ├── executive_summary.py        # CISO-facing verdict, key findings, immediate actions
 │   └── recommended_actions.py      # Per-port SOC triage recommendations (NRA engine)

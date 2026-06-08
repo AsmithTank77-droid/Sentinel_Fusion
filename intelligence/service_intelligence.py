@@ -1,7 +1,7 @@
 """
 intelligence/service_intelligence.py — Network service threat knowledge base.
 Provides service risk scores, threat descriptions, CVEs, and MITRE attack phases
-for use in enrichment (Stage 3) and scoring (Stage 6).
+for use in enrichment (Stage 3) and scoring (Stage 7).
 
 Adapted from nmap-recon-analyzer/service_intelligence.py and threat_context.py.
 """

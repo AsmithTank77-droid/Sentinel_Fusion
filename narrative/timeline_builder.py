@@ -1,5 +1,5 @@
 """
-narrative/timeline_builder.py — Stage 7: Timeline Construction
+narrative/timeline_builder.py — Stage 8: Timeline Construction
 Pipeline: score stage → timeline_builder → report_generator
 
 Assembles a chronological attack timeline from enriched events, detection

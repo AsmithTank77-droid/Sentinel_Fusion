@@ -1,5 +1,5 @@
 """
-detection/correlation_engine.py — Stage 4: Event Correlation
+detection/correlation_engine.py — Stage 5: Event Correlation
 Pipeline: enrich.py → correlation_engine.py → detection modules
 
 Groups enriched normalized events into attack chains by correlating

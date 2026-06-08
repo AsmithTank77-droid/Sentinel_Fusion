@@ -1,6 +1,6 @@
 """
-detection/sigma_field_mapper.py — Stage 5 pre-processing: Sigma field translation.
-Pipeline: enrich.py (Stage 3) → [Stage 5: sigma_engine] → correlation_engine.py (Stage 6)
+detection/sigma_field_mapper.py — Stage 4 pre-processing: Sigma field translation.
+Pipeline: enrich.py (Stage 3) → [Stage 4: sigma_engine] → correlation_engine.py (Stage 5)
 
 Translates normalized event dicts into Sigma-compatible field names so that
 Sigma rules can match against standard field names without awareness of the

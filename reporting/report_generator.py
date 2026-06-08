@@ -1,5 +1,5 @@
 """
-reporting/report_generator.py — Stage 8: SOC Report Generation
+reporting/report_generator.py — Stage 9: SOC Report Generation
 Pipeline: timeline_builder → report_generator
 
 Produces the final structured SOC report in two formats:

@@ -1,6 +1,6 @@
 """
-detection/sigma_engine.py — Stage 5: Sigma Rule Evaluation
-Pipeline: enrich.py (Stage 3) → sigma_engine.py (Stage 5) → correlation_engine.py (Stage 6)
+detection/sigma_engine.py — Stage 4: Sigma Rule Evaluation
+Pipeline: enrich.py (Stage 3) → sigma_engine.py (Stage 4) → correlation_engine.py (Stage 5)
 
 Evaluates a curated set of Sigma-compatible detection rules against enriched
 event dicts. Each rule is mapped to a MITRE ATT&CK technique. Matched rules

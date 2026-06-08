@@ -34,7 +34,7 @@ def run(
     report: bool           = typer.Option(False, "--report", "-r", help="Print the full Markdown SOC report."),
 ) -> None:
     """
-    Run the full 8-stage Sentinel Fusion pipeline over one or more event sources.
+    Run the full 10-stage Sentinel Fusion pipeline over one or more event sources.
 
     At least one of --nra, --winlog, or --mock must be supplied.
 
