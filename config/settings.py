@@ -249,6 +249,28 @@ class Settings(BaseSettings):
     )
 
     # ------------------------------------------------------------------
+    # Live threat feed ingestion
+    # ------------------------------------------------------------------
+
+    feeds_enabled: bool = Field(
+        default=False,
+        description=(
+            "Enable live threat feed downloads (abuse.ch Feodo Tracker, "
+            "Emerging Threats). No API key required. "
+            "Set SENTINEL_FEEDS_ENABLED=true to enable."
+        ),
+    )
+
+    otx_key: str = Field(
+        default="",
+        description=(
+            "AlienVault OTX API key for per-IP threat lookups. "
+            "Free account at otx.alienvault.com. "
+            "Only used when SENTINEL_FEEDS_ENABLED=true."
+        ),
+    )
+
+    # ------------------------------------------------------------------
     # Elasticsearch SIEM integration
     # ------------------------------------------------------------------
 
