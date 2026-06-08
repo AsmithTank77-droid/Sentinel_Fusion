@@ -255,7 +255,7 @@ Sentinel_Fusion/
 ├── hunting/                        # Stage 10 — proactive cross-run threat hunting
 │   └── hunt_engine.py              # HuntEngine: low-and-slow BF, beacon, alert cluster, persistent actor
 │
-├── detection/                      # Stages 4 & 6 — Sigma engine and stateless detectors
+├── detection/                      # Stages 4, 5 & 6 — Sigma engine, correlation, and stateless detectors
 │   ├── sigma_field_mapper.py       # Stage 4 — maps Sigma field names to normalized schema
 │   ├── sigma_engine.py             # Stage 4 — 10 MITRE-mapped Sigma-compatible rules
 │   ├── correlation_engine.py       # Stage 5 — event correlation / attack chain
@@ -369,7 +369,8 @@ Sentinel_Fusion/
 │   └── test_watch.py               # FileCursor and watch cycle tests
 │
 ├── docs/
-│   └── ARCHITECTURE.md             # Full system architecture design document
+│   ├── ARCHITECTURE.md             # Full system architecture design document
+│   └── SENTINEL_FUSION_GUIDE.md    # Complete module-by-module study guide
 ├── sentinel.db                     # SQLite database (runtime artifact, gitignored)
 ├── Dockerfile
 ├── docker-compose.yml
