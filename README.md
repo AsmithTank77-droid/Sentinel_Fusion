@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-999%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-1016%20passing-brightgreen)
 ![CI](https://github.com/AsmithTank77-droid/Sentinel_Fusion/actions/workflows/test.yml/badge.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-REST%20API-009688?logo=fastapi&logoColor=white)
 ![SQLite](https://img.shields.io/badge/storage-SQLite-003B57?logo=sqlite&logoColor=white)
