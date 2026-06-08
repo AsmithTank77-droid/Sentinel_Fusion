@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ["SENTINEL_DB"] = ":memory:"
 
-from interface.commands.watch import _FileCursor, _run_watch_cycle  # noqa: E402
+from interface.commands.watch import _FileCursor, _run_watch_cycle, _classify_file, _scan_dir, _dir_cursors_to_inputs  # noqa: E402
 
 
 def _write_events(path: Path, events: list[dict]) -> None:
@@ -189,3 +189,93 @@ class TestRunWatchCycle:
         assert r2 is not None
         assert r2["event_count"] == 1
         assert r2["normalized_events"][0]["event_type"] == "authentication_failure"
+
+
+# ===========================================================================
+# Directory mode helpers
+# ===========================================================================
+
+class TestClassifyFile:
+    def test_winlog_prefix(self, tmp_path):
+        assert _classify_file(tmp_path / "winlog_events.json") == "winlog"
+
+    def test_winlog_uppercase(self, tmp_path):
+        assert _classify_file(tmp_path / "WINLOG_foo.json") == "winlog"
+
+    def test_nra_prefix(self, tmp_path):
+        assert _classify_file(tmp_path / "nra_scan.json") == "nra"
+
+    def test_unknown_prefix_returns_mock(self, tmp_path):
+        assert _classify_file(tmp_path / "events.json") == "mock"
+        assert _classify_file(tmp_path / "attack_data.json") == "mock"
+
+
+class TestScanDir:
+    def test_new_json_file_added_to_cursors(self, tmp_path):
+        (tmp_path / "winlog_test.json").write_text("[]")
+        cursors: dict = {}
+        _scan_dir(tmp_path, cursors)
+        assert len(cursors) == 1
+        key = list(cursors.keys())[0]
+        assert key.startswith("winlog:")
+
+    def test_existing_cursor_not_duplicated(self, tmp_path):
+        f = tmp_path / "events.json"
+        f.write_text("[]")
+        cursors: dict = {}
+        _scan_dir(tmp_path, cursors)
+        _scan_dir(tmp_path, cursors)  # second scan — no duplicate
+        assert len(cursors) == 1
+
+    def test_non_json_files_ignored(self, tmp_path):
+        (tmp_path / "notes.txt").write_text("not json")
+        (tmp_path / "data.csv").write_text("a,b,c")
+        cursors: dict = {}
+        _scan_dir(tmp_path, cursors)
+        assert len(cursors) == 0
+
+    def test_multiple_files_all_added(self, tmp_path):
+        (tmp_path / "winlog_a.json").write_text("[]")
+        (tmp_path / "nra_b.json").write_text("[]")
+        (tmp_path / "events.json").write_text("[]")
+        cursors: dict = {}
+        _scan_dir(tmp_path, cursors)
+        assert len(cursors) == 3
+
+
+class TestDirCursorsToInputs:
+    def test_returns_events_grouped_by_source_type(self, tmp_path):
+        import os as _os
+        ev = {"timestamp": "2026-06-08T10:00:00Z", "src_ip": "1.1.1.1",
+              "dst_ip": "10.0.0.1", "event_type": "port_scan", "severity": "low"}
+        f = tmp_path / "winlog_test.json"
+        f.write_text(json.dumps([ev]))
+        cursors = {f"winlog:{f}": _FileCursor(f)}
+        inputs = _dir_cursors_to_inputs(cursors)
+        assert "winlog" in inputs
+        assert len(inputs["winlog"]) == 1
+
+    def test_no_new_events_returns_empty(self, tmp_path):
+        f = tmp_path / "events.json"
+        f.write_text("[]")
+        cursors = {f"mock:{f}": _FileCursor(f)}
+        _dir_cursors_to_inputs(cursors)  # drain
+        inputs = _dir_cursors_to_inputs(cursors)  # second poll — no change
+        assert inputs == {}
+
+    def test_multiple_files_same_type_merged(self, tmp_path):
+        import os as _os
+        ev1 = {"timestamp": "2026-06-08T10:00:00Z", "src_ip": "1.1.1.1",
+               "dst_ip": "10.0.0.1", "event_type": "port_scan", "severity": "low"}
+        ev2 = {"timestamp": "2026-06-08T10:00:01Z", "src_ip": "2.2.2.2",
+               "dst_ip": "10.0.0.1", "event_type": "port_scan", "severity": "low"}
+        f1 = tmp_path / "winlog_a.json"
+        f2 = tmp_path / "winlog_b.json"
+        f1.write_text(json.dumps([ev1]))
+        f2.write_text(json.dumps([ev2]))
+        cursors = {
+            f"winlog:{f1}": _FileCursor(f1),
+            f"winlog:{f2}": _FileCursor(f2),
+        }
+        inputs = _dir_cursors_to_inputs(cursors)
+        assert len(inputs["winlog"]) == 2

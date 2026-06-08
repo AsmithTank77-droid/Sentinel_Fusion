@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-972%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-983%20passing-brightgreen)
 ![CI](https://github.com/AsmithTank77-droid/Sentinel_Fusion/actions/workflows/test.yml/badge.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-REST%20API-009688?logo=fastapi&logoColor=white)
 ![SQLite](https://img.shields.io/badge/storage-SQLite-003B57?logo=sqlite&logoColor=white)
@@ -37,6 +37,10 @@ sentinel run --mock data/samples/simulated_attack.json
 
 # Watch a file for new events and run the pipeline continuously
 sentinel watch --winlog data/samples/windows_log.json --interval 10
+
+# Watch a directory — drop any JSON file in and the pipeline runs automatically
+sentinel watch --dir ./incoming --interval 5
+# then in another terminal: cp data/samples/simulated_attack.json incoming/mock_live.json
 
 # Start the REST API
 python api/run.py            # → http://localhost:8000

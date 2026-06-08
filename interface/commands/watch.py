@@ -11,6 +11,12 @@ Supports the same sources as `sentinel run`:
     --nra    <file.json>   NRA (Nmap) JSON array
     --mock   <file.json>   Simulated event JSON array
 
+Also supports directory mode:
+    --dir <directory>      Watch a directory — any .json file dropped in is
+                           auto-detected and classified by name prefix:
+                           winlog_*.json → winlog, nra_*.json → nra,
+                           everything else → mock.
+
 State is tracked per-file as (mtime, last_event_count). When a file shrinks
 (log rotation), the cursor resets and all events are treated as new.
 """
@@ -152,6 +158,38 @@ def _run_watch_cycle(
     return result
 
 
+# ── Directory scanner ─────────────────────────────────────────────────────────
+
+def _classify_file(path: Path) -> str:
+    """Classify a JSON file by name prefix: winlog_* → winlog, nra_* → nra, else mock."""
+    name = path.name.lower()
+    if name.startswith("winlog"):
+        return "winlog"
+    if name.startswith("nra"):
+        return "nra"
+    return "mock"
+
+
+def _scan_dir(directory: Path, cursors: dict[str, _FileCursor]) -> None:
+    """Add cursors for any new .json files found in directory."""
+    for f in sorted(directory.glob("*.json")):
+        key = f"{_classify_file(f)}:{f}"
+        if key not in cursors:
+            cursors[key] = _FileCursor(f)
+            console.print(f"[dim]  + watching {f.name} as [bold]{_classify_file(f)}[/bold][/dim]")
+
+
+def _dir_cursors_to_inputs(cursors: dict[str, _FileCursor]) -> dict[str, list[dict]]:
+    """Poll all directory cursors and merge by source type."""
+    inputs: dict[str, list[dict]] = {}
+    for key, cursor in list(cursors.items()):
+        source_type = key.split(":")[0]
+        new = cursor.poll()
+        if new:
+            inputs.setdefault(source_type, []).extend(new)
+    return inputs
+
+
 # ── Typer command ─────────────────────────────────────────────────────────────
 
 @app.callback(invoke_without_command=True)
@@ -159,6 +197,7 @@ def watch(
     winlog:   Optional[Path] = typer.Option(None, "--winlog", help="Winlog JSON array file to tail.", exists=True),
     nra:      Optional[Path] = typer.Option(None, "--nra",    help="NRA JSON array file to tail.",    exists=True),
     mock:     Optional[Path] = typer.Option(None, "--mock",   help="Mock event JSON array to tail.",  exists=True),
+    dir:      Optional[Path] = typer.Option(None, "--dir",    help="Directory to watch. JSON files dropped here are auto-detected.", exists=True, file_okay=False, dir_okay=True),
     interval: int            = typer.Option(10,  "--interval", "-i", help="Poll interval in seconds.", min=1, max=3600),
 ) -> None:
     """
@@ -172,6 +211,7 @@ def watch(
     Examples:
         sentinel watch --winlog data/samples/windows_log.json
         sentinel watch --winlog events.json --nra scan.json --interval 30
+        sentinel watch --dir ./incoming --interval 5
     """
     sources: dict[str, Path] = {}
     if winlog:
@@ -181,12 +221,72 @@ def watch(
     if mock:
         sources["mock"] = mock
 
-    if not sources:
-        error("Supply at least one of --winlog, --nra, or --mock.")
+    if not sources and not dir:
+        error("Supply at least one of --winlog, --nra, --mock, or --dir.")
         raise typer.Exit(1)
 
     db_path = get_db()
 
+    # ── Directory mode ────────────────────────────────────────────────────────
+    if dir:
+        dir_cursors: dict[str, _FileCursor] = {}
+        console.print(
+            f"\n[bold cyan]Sentinel Watch[/bold cyan] — "
+            f"monitoring directory [dim]{dir}[/dim] every [bold]{interval}s[/bold]"
+        )
+        console.print("[dim]Drop winlog_*.json, nra_*.json, or any .json file in the directory.[/dim]")
+        console.print("[dim]Press Ctrl+C to stop.[/dim]\n")
+
+        _stop = False
+
+        def _handle_sigint_dir(sig: int, frame: object) -> None:
+            nonlocal _stop
+            _stop = True
+
+        signal.signal(signal.SIGINT, _handle_sigint_dir)
+
+        cycle_n  = 0
+        last_run = 0.0
+
+        while not _stop:
+            now = time.monotonic()
+            if now - last_run >= interval or cycle_n == 0:
+                cycle_n += 1
+                last_run = now
+                _scan_dir(dir, dir_cursors)
+                inputs = _dir_cursors_to_inputs(dir_cursors)
+                if inputs:
+                    from core.pipeline.orchestrator import PipelineOrchestrator, PipelineStageError
+                    total = sum(len(v) for v in inputs.values())
+                    console.print(
+                        f"\n[dim]Cycle {cycle_n}[/dim]  "
+                        f"[bold cyan]{total}[/bold cyan] new event(s) — running pipeline..."
+                    )
+                    try:
+                        result = PipelineOrchestrator().run(inputs)
+                        with StorageLayer(db_path) as store:
+                            store.persist_run(result)
+                        alerts = result.get("alerts") or []
+                        console.print(
+                            f"  [bold green]Done.[/bold green] "
+                            f"{result['event_count']} events · {len(alerts)} alert(s)"
+                        )
+                        if alerts:
+                            top = max(alerts, key=lambda a: float(a.get("confidence") or 0))
+                            console.print(
+                                f"  [bold red]Top alert:[/bold red] {top.get('alert_type')} "
+                                f"— src [cyan]{top.get('src_ip') or '—'}[/cyan]"
+                            )
+                    except PipelineStageError as exc:
+                        error(f"Pipeline failed at stage [bold]{exc.stage}[/bold]: {exc.cause}")
+
+            if not _stop:
+                time.sleep(min(1.0, interval))
+
+        success("Watch stopped.")
+        return
+
+    # ── File mode (original behaviour) ────────────────────────────────────────
     cursors: dict[str, _FileCursor] = {
         source_type: _FileCursor(path)
         for source_type, path in sources.items()
@@ -199,7 +299,6 @@ def watch(
     )
     console.print("[dim]Press Ctrl+C to stop.[/dim]\n")
 
-    # Catch Ctrl+C cleanly
     _stop = False
 
     def _handle_sigint(sig: int, frame: object) -> None:
@@ -211,7 +310,6 @@ def watch(
     cycle_n   = 0
     last_run  = 0.0
 
-    # Run first cycle immediately on startup
     while not _stop:
         now = time.monotonic()
         if now - last_run >= interval or cycle_n == 0:
