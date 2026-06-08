@@ -1,32 +1,18 @@
-## Sentinel_Fusion v3 is live 🛡️
+I just shipped v3 of Sentinel_Fusion.
 
-Three months ago I shipped a 10-stage SOC detection pipeline in Python. Today I'm dropping v3 — three new capabilities that take it from a detection engine to a full threat intelligence and SIEM-ready platform.
+For those who haven't seen it — it's a 10-stage SOC detection pipeline I built from scratch in Python. It ingests Nmap scans and Windows Event Logs, correlates them into attack chains, scores host risk, and spits out structured SOC reports with MITRE ATT&CK mappings.
 
----
+v3 adds three things I've wanted in it for a while:
 
-**What's new:**
+1. Elasticsearch SIEM Integration — every pipeline run now forwards alerts, host risk scores, and hunt findings to Elasticsearch automatically. Hook up Kibana and you've got a live SOC dashboard. No external Python dependencies, just stdlib.
 
-**1. Elasticsearch SIEM Integration**
-Every pipeline run now forwards alerts, host risk scores, hunt findings, and a run summary to Elasticsearch via the `_bulk` API — rolling daily indices, zero external dependencies (stdlib urllib only). Plug in Kibana and you have a live SOC dashboard. `SENTINEL_ELASTIC_ENABLED=true` is all it takes.
+2. MITRE ATT&CK Navigator Export — one API call gives you a full Navigator layer JSON with techniques color-coded by detection confidence. You can drop it straight into the Navigator and see exactly what your detections cover.
 
-**2. MITRE ATT&CK Navigator Export**
-One API call → a complete ATT&CK Navigator 4.x layer JSON. Techniques are color-coded by detection confidence (red ≥70%, orange 40–69%, yellow <40%), deduplicated across alerts, and mapped to correct tactic slugs automatically. Download the layer, drop it into navigator.attack.mitre.org, and instantly see your detection coverage.
+3. Live Threat Feed Ingestion — instead of just static seed data, it now pulls from abuse.ch Feodo Tracker and Emerging Threats in real time, with AlienVault OTX as a fallback for per-IP lookups. If a feed goes down it fails gracefully and the pipeline keeps running.
 
-**3. Live Threat Feed Ingestion**
-Three-tier enrichment: seed table (instant) → live blocklists (abuse.ch Feodo Tracker + Emerging Threats, cached with TTL) → AlienVault OTX per-IP lookup. All tiers fail gracefully — a network timeout never breaks the pipeline. No API key required for the base feeds.
+972 tests passing. Built it to show what a detection pipeline actually looks like end to end — not just scripts, but a real system with an API, a storage layer, and proper test coverage.
 
----
-
-**By the numbers:**
-- 10-stage pipeline: Ingest → Normalize → Enrich → Sigma → Correlate → Detect → Score → Timeline → Report → Hunt
-- 972 tests (up from 917)
-- 55 new tests across 3 new test modules
-
----
-
-**Stack:** Python · FastAPI · SQLite · Elasticsearch · ATT&CK Navigator · Docker
-
-The project is fully open source. If you're building a home SOC lab, studying for a blue-team cert, or just curious how detection pipelines work end to end — the repo is here:
+If you're studying for a blue-team cert, building a home SOC lab, or just want to see how something like this is structured, the full repo is here:
 https://github.com/AsmithTank77-droid/Sentinel_Fusion
 
-#cybersecurity #blueteam #SIEM #MITRE #threathunting #python #SOC #infosec #opensourcetools
+#cybersecurity #blueteam #SOC #SIEM #MITRE #threathunting #python #infosec
