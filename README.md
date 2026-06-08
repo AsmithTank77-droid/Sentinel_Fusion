@@ -42,6 +42,10 @@ sentinel watch --winlog data/samples/windows_log.json --interval 10
 sentinel watch --dir ./incoming --interval 5
 # then in another terminal: cp data/samples/simulated_attack.json incoming/mock_live.json
 
+# Run the hunt engine demo — simulates 6 days of slow-burn attacker activity
+# and surfaces all 4 cross-run hunt patterns (beacon, low-and-slow BF, persistent actor, alert cluster)
+python scripts/demo_hunt.py
+
 # Start the REST API
 python api/run.py            # → http://localhost:8000
 # or
@@ -210,11 +214,13 @@ Payload includes: `run_id`, `alert_type`, `confidence`, `src_ip`, `dst_ip`, `sev
 
 ### Threat Hunt Engine (Stage 10 — cross-run)
 
+Surfaces attacker patterns that no single pipeline run can see. Run `python scripts/demo_hunt.py` to see all four strategies fire against simulated multi-day attacker activity.
+
 | Hunt Type | What it finds | MITRE Tactic |
 |-----------|---------------|--------------|
 | `low_and_slow_brute_force` | Same src_ip with auth failures across 3+ runs, each below the live threshold | TA0006 - Credential Access |
 | `alert_cluster` | Same src_ip with 3+ open alerts individually dismissed but collectively significant | TA0043 - Reconnaissance |
-| `beacon` | Same (src_ip → dst_ip) pair in 5+ separate runs — consistent with C2 check-in | TA0011 - Command and Control |
+| `beacon` | Same (src_ip → dst_ip) external pair in 5+ separate runs — consistent with C2 check-in | TA0011 - Command and Control |
 | `persistent_threat_actor` | Same external src_ip appearing in events across 5+ separate runs | TA0043 - Reconnaissance |
 
 Hunt findings appear in `hunt_findings` in the pipeline output alongside `alerts`. Each finding includes `hunt_confidence`, MITRE tactic, `run_count`, evidence dict, and a plain-English `analyst_note`.
@@ -413,11 +419,12 @@ Sentinel_Fusion/
 │
 ├── incoming/                       # Drop zone for sentinel watch --dir mode
 │
-├── scripts/                        # Shell helper scripts
+├── scripts/                        # Helper scripts
 │   ├── run_demo.sh
 │   ├── simulate_attack.sh
 │   ├── generate_report.sh
-│   └── demo_watch.sh               # Live watch demo — simulates brute force → scan → lateral movement
+│   ├── demo_watch.sh               # Live watch demo — simulates brute force → scan → lateral movement
+│   └── demo_hunt.py                # Hunt engine demo — 6-run slow-burn attacker, all 4 hunt patterns
 │
 ├── tests/                          # Pytest test suite
 │   ├── test_ingest.py
