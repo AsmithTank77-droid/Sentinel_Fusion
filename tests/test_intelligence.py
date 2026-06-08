@@ -45,7 +45,13 @@ class TestIpReputation:
         assert result["is_malicious"] is False
 
     def test_unknown_external_ip_neutral(self):
-        result = self.rep.lookup("8.8.8.8")
+        import unittest.mock as mock
+        import config.settings as _cfg
+        from intelligence import ip_reputation as _mod
+        stub = _cfg.settings.model_copy(update={"abuseipdb_key": ""})
+        _mod._cache.clear()
+        with mock.patch.object(_cfg, "settings", stub):
+            result = self.rep.lookup("8.8.8.8")
         assert result["is_malicious"] is False
         assert result["reputation_score"] == 0.05
         assert "unknown" in result["categories"]
@@ -101,7 +107,13 @@ class TestGeoEnrichment:
         assert result["country"] == "Internal"
 
     def test_unknown_ip_returns_defaults(self):
-        result = self.geo.lookup("8.8.8.8")
+        import unittest.mock as mock
+        import config.settings as _cfg
+        from intelligence import geo_enrichment as _mod
+        stub = _cfg.settings.model_copy(update={"geo_enabled": False})
+        _mod._cache.clear()
+        with mock.patch.object(_cfg, "settings", stub):
+            result = self.geo.lookup("8.8.8.8")
         assert result["country"] == "Unknown"
         assert result["country_code"] == "XX"
         assert result["is_tor"] is False

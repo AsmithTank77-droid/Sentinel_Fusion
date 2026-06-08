@@ -55,8 +55,13 @@ class TestIpReputationCache:
         assert "internal" in result["categories"]
 
     def test_unknown_ip_stub_without_key(self):
+        import unittest.mock as mock
+        import config.settings as _cfg
         from intelligence.ip_reputation import IpReputation
-        result = IpReputation().lookup("1.2.3.4")
+        stub = _cfg.settings.model_copy(update={"abuseipdb_key": ""})
+        self.mod._cache.clear()
+        with mock.patch.object(_cfg, "settings", stub):
+            result = IpReputation().lookup("1.2.3.4")
         assert result["ip"] == "1.2.3.4"
         assert result["is_malicious"] is False
         assert result["source"] == "none"
@@ -104,11 +109,15 @@ class TestIpReputationCache:
     def test_abuseipdb_lookup_skipped_without_key(self):
         """No live call should be attempted when api key is not configured."""
         import unittest.mock as mock
+        import config.settings as _cfg
         from intelligence import ip_reputation as _mod
         from intelligence.ip_reputation import IpReputation
-        with mock.patch.object(_mod, "get_json") as patched:
-            IpReputation().lookup("5.5.5.5")
-            patched.assert_not_called()
+        stub = _cfg.settings.model_copy(update={"abuseipdb_key": ""})
+        self.mod._cache.clear()
+        with mock.patch.object(_cfg, "settings", stub):
+            with mock.patch.object(_mod, "get_json") as patched:
+                IpReputation().lookup("5.5.5.5")
+                patched.assert_not_called()
 
     def test_abuseipdb_fallback_on_error(self):
         """When live API raises IntelHttpError, stub data is returned."""
@@ -152,8 +161,14 @@ class TestGeoEnrichmentCache:
         assert result["is_tor"] is False
 
     def test_unknown_ip_stub_without_geo_enabled(self):
+        import unittest.mock as mock
+        import config.settings as _cfg
+        from intelligence import geo_enrichment as _geo_mod
         from intelligence.geo_enrichment import GeoEnrichment
-        result = GeoEnrichment().lookup("1.2.3.4")
+        stub = _cfg.settings.model_copy(update={"geo_enabled": False})
+        _geo_mod._cache.clear()
+        with mock.patch.object(_cfg, "settings", stub):
+            result = GeoEnrichment().lookup("1.2.3.4")
         assert result["country"] == "Unknown"
         assert result["country_code"] == "XX"
 
@@ -166,11 +181,15 @@ class TestGeoEnrichmentCache:
 
     def test_geo_lookup_skipped_without_flag(self):
         import unittest.mock as mock
+        import config.settings as _cfg
         from intelligence import geo_enrichment as _mod
         from intelligence.geo_enrichment import GeoEnrichment
-        with mock.patch.object(_mod, "get_json") as patched:
-            GeoEnrichment().lookup("5.5.5.5")
-            patched.assert_not_called()
+        stub = _cfg.settings.model_copy(update={"geo_enabled": False})
+        _mod._cache.clear()
+        with mock.patch.object(_cfg, "settings", stub):
+            with mock.patch.object(_mod, "get_json") as patched:
+                GeoEnrichment().lookup("5.5.5.5")
+                patched.assert_not_called()
 
     def test_geo_fallback_on_error(self):
         """When live API raises IntelHttpError, stub data is returned."""

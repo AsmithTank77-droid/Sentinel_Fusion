@@ -233,15 +233,39 @@ class TestEmptyIp:
 # ---------------------------------------------------------------------------
 
 class TestUnknownExternal:
+    def _stub_settings(self):
+        import config.settings as _cfg
+        return _cfg.settings.model_copy(
+            update={"abuseipdb_key": "", "geo_enabled": False, "feeds_enabled": False}
+        )
+
     def test_unknown_external_not_threat(self, enricher):
-        result = enricher.enrich(_UNKNOWN_EXT)
+        import unittest.mock as mock
+        import config.settings as _cfg
+        from intelligence import ip_reputation as _ip_mod, geo_enrichment as _geo_mod
+        _ip_mod._cache.clear()
+        _geo_mod._cache.clear()
+        with mock.patch.object(_cfg, "settings", self._stub_settings()):
+            result = enricher.enrich(_UNKNOWN_EXT)
         assert result["is_threat"] is False
 
     def test_unknown_external_level_none(self, enricher):
-        assert enricher.enrich(_UNKNOWN_EXT)["threat_level"] == "none"
+        import unittest.mock as mock
+        import config.settings as _cfg
+        from intelligence import ip_reputation as _ip_mod, geo_enrichment as _geo_mod
+        _ip_mod._cache.clear()
+        _geo_mod._cache.clear()
+        with mock.patch.object(_cfg, "settings", self._stub_settings()):
+            assert enricher.enrich(_UNKNOWN_EXT)["threat_level"] == "none"
 
     def test_unknown_external_low_score(self, enricher):
-        assert enricher.enrich(_UNKNOWN_EXT)["threat_score"] < 0.10
+        import unittest.mock as mock
+        import config.settings as _cfg
+        from intelligence import ip_reputation as _ip_mod, geo_enrichment as _geo_mod
+        _ip_mod._cache.clear()
+        _geo_mod._cache.clear()
+        with mock.patch.object(_cfg, "settings", self._stub_settings()):
+            assert enricher.enrich(_UNKNOWN_EXT)["threat_score"] < 0.10
 
     def test_unknown_external_no_feed_hits(self, enricher):
         assert enricher.enrich(_UNKNOWN_EXT)["feed_hits"] == []
