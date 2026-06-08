@@ -62,6 +62,73 @@ services:
         max-size: "10m"
         max-file: "3"
 
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Elasticsearch — SIEM storage backend
+  # Receives alerts, scores, and hunt findings from Sentinel_Fusion after
+  # each pipeline run when SENTINEL_ELASTIC_ENABLED=true.
+  #
+  # UI:  http://localhost:9200
+  # ──────────────────────────────────────────────────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: sentinel-elasticsearch
+
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+
+    ports:
+      - "9200:9200"
+
+    volumes:
+      - elastic_data:/usr/share/elasticsearch/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      interval: 20s
+      timeout: 10s
+      start_period: 40s
+      retries: 5
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Kibana — SIEM dashboard and visualisation
+  # View Sentinel_Fusion alerts and hunt findings in Kibana Discover.
+  #
+  # UI:  http://localhost:5601
+  # ──────────────────────────────────────────────────────────────────────────
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.0
+    container_name: sentinel-kibana
+
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+
+    ports:
+      - "5601:5601"
+
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   sentinel_data:
+    driver: local
+  elastic_data:
     driver: local

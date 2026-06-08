@@ -256,7 +256,7 @@ class PipelineOrchestrator:
         report        = self._stage_report(timeline, scores, alerts, trace, enriched)
         hunt_findings = self._stage_hunt(store, trace)
 
-        return {
+        result = {
             "event_count":       len(enriched),
             "normalized_events": [e.to_dict() for e in enriched],
             "alerts":            alerts,
@@ -266,6 +266,10 @@ class PipelineOrchestrator:
             "hunt_findings":     hunt_findings,
             "trace":             trace,
         }
+
+        self._forward_to_siem(result, trace)
+
+        return result
 
     # ------------------------------------------------------------------
     # Stage 1: Ingest
@@ -625,3 +629,29 @@ class PipelineOrchestrator:
             raise
         except Exception as exc:
             raise PipelineStageError(STAGE, exc) from exc
+
+    # ------------------------------------------------------------------
+    # SIEM forwarding (non-fatal post-pipeline step)
+    # ------------------------------------------------------------------
+
+    def _forward_to_siem(self, result: dict, trace: list[dict]) -> None:
+        """
+        Forward pipeline result to Elasticsearch if SENTINEL_ELASTIC_ENABLED=true.
+        Never raises — a SIEM forwarding failure must not break the pipeline.
+        """
+        try:
+            from config.settings import settings
+            if not settings.elastic_enabled:
+                return
+            from siem.elastic_forwarder import ElasticForwarder
+            forwarder = ElasticForwarder(
+                url=settings.elastic_url,
+                api_key=settings.elastic_api_key,
+                index_prefix=settings.elastic_index_prefix,
+                timeout=settings.elastic_timeout,
+            )
+            run_id = result.get("report", {}).get("json", {}).get("run_id", "")
+            fwd    = forwarder.forward(result, run_id=run_id)
+            trace.append({"stage": "siem_forward", "status": "ok", **fwd})
+        except Exception as exc:
+            trace.append({"stage": "siem_forward", "status": "error", "error": str(exc)})

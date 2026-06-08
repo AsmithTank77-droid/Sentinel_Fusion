@@ -248,6 +248,46 @@ class Settings(BaseSettings):
         ),
     )
 
+    # ------------------------------------------------------------------
+    # Elasticsearch SIEM integration
+    # ------------------------------------------------------------------
+
+    elastic_enabled: bool = Field(
+        default=False,
+        description=(
+            "Forward pipeline results to Elasticsearch after each run. "
+            "Set SENTINEL_ELASTIC_ENABLED=true to enable."
+        ),
+    )
+
+    elastic_url: str = Field(
+        default="http://localhost:9200",
+        description="Elasticsearch base URL. Set SENTINEL_ELASTIC_URL.",
+    )
+
+    elastic_api_key: str = Field(
+        default="",
+        description=(
+            "Elasticsearch API key for authentication. "
+            "Leave empty for unauthenticated local instances."
+        ),
+    )
+
+    elastic_index_prefix: str = Field(
+        default="sentinel",
+        description=(
+            "Prefix for Elasticsearch index names. "
+            "Indices: {prefix}-alerts, {prefix}-scores, {prefix}-hunt, {prefix}-runs."
+        ),
+    )
+
+    elastic_timeout: int = Field(
+        default=5,
+        ge=1,
+        le=30,
+        description="HTTP timeout in seconds for Elasticsearch API calls.",
+    )
+
     cors_origins: str = Field(
         default="*",
         description=(
