@@ -4,13 +4,15 @@
 
 ![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-917%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-972%20passing-brightgreen)
 ![CI](https://github.com/AsmithTank77-droid/Sentinel_Fusion/actions/workflows/test.yml/badge.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-REST%20API-009688?logo=fastapi&logoColor=white)
 ![SQLite](https://img.shields.io/badge/storage-SQLite-003B57?logo=sqlite&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey)
 
 Sentinel_Fusion is a 10-stage detection pipeline that ingests Nmap scans and Windows Event Logs, correlates them into attack chains, and produces structured JSON and Markdown SOC reports with host risk scores, MITRE ATT&CK mappings, WINLOG behavioral alerts, per-service triage recommendations, and proactive cross-run threat hunting.
+
+**v3 adds:** Elasticsearch SIEM integration, MITRE ATT&CK Navigator layer export, and live threat feed ingestion (abuse.ch Feodo Tracker, Emerging Threats, AlienVault OTX).
 
 Incorporates the full logic of:
 - **nmap-recon-analyzer** — Nmap XML parsing, service risk scoring, CVE mapping, SOC triage recommendations
@@ -135,6 +137,46 @@ The orchestrator (`core/pipeline/orchestrator.py`) drives the full run. `Storage
 
 ---
 
+## v3 Features
+
+### Elasticsearch SIEM Integration
+Forwards alerts, host risk scores, and hunt findings to Elasticsearch after every pipeline run. Four rolling daily indices: `sentinel-alerts`, `sentinel-scores`, `sentinel-hunt`, `sentinel-runs`. Kibana dashboard included via Docker.
+
+```bash
+# Start Sentinel + Elasticsearch + Kibana
+docker-compose up
+
+# Enable forwarding
+SENTINEL_ELASTIC_ENABLED=true
+SENTINEL_ELASTIC_URL=http://localhost:9200
+# Kibana → http://localhost:5601
+```
+
+### MITRE ATT&CK Navigator Export
+Every pipeline run produces a Navigator 4.x layer JSON. Techniques are confidence-scored (0–100) and colour-coded: red (≥70%), orange (40–69%), yellow (<40%). Sub-techniques are tracked independently.
+
+```bash
+# Download Navigator layer for a run
+GET /api/v1/pipeline/runs/{run_id}/navigator
+# Import at https://mitre-attack.github.io/attack-navigator/
+```
+
+### Live Threat Feed Ingestion
+Upgrades the enrichment stage from a static seed table to a live three-tier feed engine. Two no-key feeds updated hourly/daily; optional AlienVault OTX for per-IP lookups.
+
+| Feed | Source | Covers |
+|------|--------|--------|
+| Feodo Tracker | abuse.ch | Active C2 botnet IPs (hourly) |
+| Emerging Threats | Proofpoint | Compromised host IPs (daily) |
+| OTX | AlienVault | Per-IP threat intel (API key optional) |
+
+```bash
+SENTINEL_FEEDS_ENABLED=true
+SENTINEL_OTX_KEY=your-key   # optional
+```
+
+---
+
 ## Detection Capabilities
 
 ### Threat Hunt Engine (Stage 10 — cross-run)
@@ -193,6 +235,7 @@ GET  /api/v1/status                          Platform statistics (totals, top ri
 POST /api/v1/pipeline/run                    Run the pipeline (JSON body: {nra, winlog, mock} event arrays)
 GET  /api/v1/pipeline/runs                   Pipeline run history
 GET  /api/v1/pipeline/runs/{run_id}          Get a specific pipeline run
+GET  /api/v1/pipeline/runs/{run_id}/navigator  Download ATT&CK Navigator layer (JSON)
 GET  /api/v1/events                          Query stored normalized events
 GET  /api/v1/alerts                          Query stored alerts (filterable by status, confidence)
 PATCH /api/v1/alerts/{id}/status             Update alert status (open → investigating → contained → closed)
@@ -276,13 +319,17 @@ Sentinel_Fusion/
 ├── reporting/                      # Stage 9 — output generation
 │   ├── report_generator.py         # JSON and Markdown report builder
 │   ├── executive_summary.py        # CISO-facing verdict, key findings, immediate actions
-│   └── recommended_actions.py      # Per-port SOC triage recommendations (NRA engine)
+│   ├── recommended_actions.py      # Per-port SOC triage recommendations (NRA engine)
+│   └── navigator_export.py         # MITRE ATT&CK Navigator 4.x layer export
+│
+├── siem/                           # SIEM integrations
+│   └── elastic_forwarder.py        # Elasticsearch forwarder — alerts, scores, hunt findings
 │
 ├── intelligence/                   # Enrichment data providers (called by enrich.py)
 │   ├── _http.py                    # Shared stdlib HTTP helper for live API calls
 │   ├── ip_reputation.py            # IP reputation: seed table → AbuseIPDB → stub fallback
 │   ├── geo_enrichment.py           # Geolocation: seed table → ip-api.com → stub fallback
-│   ├── threat_feeds.py             # Threat feed membership lookup
+│   ├── threat_feeds.py             # Live feeds: Feodo Tracker → Emerging Threats → OTX → seed
 │   ├── threat_enricher.py          # Synthesizes rep + geo + feeds into a single composite assessment
 │   ├── event_intelligence.py       # Windows Event ID knowledge base (MITRE, severity, analyst notes)
 │   └── service_intelligence.py     # Network service knowledge base (risk scores, threat descriptions, CVEs)
@@ -362,11 +409,14 @@ Sentinel_Fusion/
 │   ├── test_sigma_field_mapper.py
 │   ├── test_sigma_engine.py
 │   ├── test_threat_enricher.py
+│   ├── test_threat_feeds_live.py   # live feed fetching, caching, OTX integration
 │   ├── test_hunt_engine.py
 │   ├── test_orchestrator.py
 │   ├── test_api.py                 # includes API key auth tests
 │   ├── test_cli.py
-│   └── test_watch.py               # FileCursor and watch cycle tests
+│   ├── test_watch.py               # FileCursor and watch cycle tests
+│   ├── test_elastic_forwarder.py   # Elasticsearch SIEM forwarding
+│   └── test_navigator_export.py    # MITRE ATT&CK Navigator layer export
 │
 ├── docs/
 │   ├── ARCHITECTURE.md             # Full system architecture design document
@@ -387,6 +437,6 @@ Sentinel_Fusion/
 ## Running Tests
 
 ```bash
-pytest tests/           # 917 tests, ~3s
+pytest tests/           # 972 tests, ~3s
 pytest tests/ -v        # verbose output per test
 ```
