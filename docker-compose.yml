@@ -3,15 +3,24 @@ version: "3.9"
 # ──────────────────────────────────────────────────────────────────────────────
 # Sentinel Fusion — Docker Compose
 #
-# Quick start:
+# Quick start (API + dashboard only):
 #   docker-compose up --build
+#   → Dashboard:  http://localhost:8000/dashboard
+#   → API docs:   http://localhost:8000/docs
 #
-# API:      http://localhost:8000/api/v1/health
-# Swagger:  http://localhost:8000/api/docs
-# ReDoc:    http://localhost:8000/api/redoc
+# With Elasticsearch + Kibana SIEM:
+#   docker-compose --profile elastic up --build
+#   → Kibana:     http://localhost:5601
+#   → ES:         http://localhost:9200
+#
+# The database is seeded automatically on first boot with:
+#   • A full incident run (NRA + Windows logs, 16 alerts, Critical verdict)
+#   • 7 hunt engine runs (slow-burn attacker, all 4 cross-run patterns)
 # ──────────────────────────────────────────────────────────────────────────────
 
 services:
+
+  # ── Sentinel Fusion API + Dashboard ────────────────────────────────────────
   sentinel:
     build:
       context: .
@@ -19,29 +28,33 @@ services:
       target: runtime
 
     image: sentinel-fusion:latest
-
     container_name: sentinel-fusion
 
     ports:
       - "${SENTINEL_PORT:-8000}:8000"
 
     volumes:
-      # Persist SQLite database across container restarts
+      # Persist SQLite database across restarts
       - sentinel_data:/app/data
 
     environment:
-      SENTINEL_DB:             ${SENTINEL_DB:-/app/data/sentinel.db}
-      SENTINEL_HOST:           ${SENTINEL_HOST:-0.0.0.0}
-      SENTINEL_PORT:           ${SENTINEL_PORT:-8000}
-      SENTINEL_LOG_LEVEL:      ${SENTINEL_LOG_LEVEL:-info}
-      SENTINEL_ENV:            ${SENTINEL_ENV:-production}
-      SENTINEL_WORKERS:        ${SENTINEL_WORKERS:-1}
-      SENTINEL_RETENTION_DAYS: ${SENTINEL_RETENTION_DAYS:-90}
-      SENTINEL_DEBUG:          ${SENTINEL_DEBUG:-false}
+      SENTINEL_DB:              /app/data/sentinel.db
+      SENTINEL_HOST:            0.0.0.0
+      SENTINEL_PORT:            ${SENTINEL_PORT:-8000}
+      SENTINEL_LOG_LEVEL:       ${SENTINEL_LOG_LEVEL:-info}
+      SENTINEL_ENV:             ${SENTINEL_ENV:-production}
+      SENTINEL_WORKERS:         ${SENTINEL_WORKERS:-1}
+      SENTINEL_RETENTION_DAYS:  ${SENTINEL_RETENTION_DAYS:-90}
+      SENTINEL_DEBUG:           false
+      SENTINEL_FEEDS_ENABLED:   ${SENTINEL_FEEDS_ENABLED:-false}
+      SENTINEL_GEO_ENABLED:     ${SENTINEL_GEO_ENABLED:-false}
+      SENTINEL_ABUSEIPDB_KEY:   ${SENTINEL_ABUSEIPDB_KEY:-}
+      SENTINEL_ELASTIC_ENABLED: ${SENTINEL_ELASTIC_ENABLED:-false}
+      SENTINEL_ELASTIC_URL:     ${SENTINEL_ELASTIC_URL:-http://elasticsearch:9200}
 
     env_file:
       - path: .env
-        required: false   # .env is optional — defaults are safe
+        required: false
 
     restart: unless-stopped
 
@@ -53,7 +66,7 @@ services:
         - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"
       interval: 30s
       timeout: 5s
-      start_period: 15s
+      start_period: 30s
       retries: 3
 
     logging:
@@ -62,18 +75,9 @@ services:
         max-size: "10m"
         max-file: "3"
 
-    depends_on:
-      elasticsearch:
-        condition: service_healthy
-
-  # ──────────────────────────────────────────────────────────────────────────
-  # Elasticsearch — SIEM storage backend
-  # Receives alerts, scores, and hunt findings from Sentinel_Fusion after
-  # each pipeline run when SENTINEL_ELASTIC_ENABLED=true.
-  #
-  # UI:  http://localhost:9200
-  # ──────────────────────────────────────────────────────────────────────────
+  # ── Elasticsearch — optional SIEM backend (--profile elastic) ──────────────
   elasticsearch:
+    profiles: [elastic]
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     container_name: sentinel-elasticsearch
 
@@ -89,7 +93,7 @@ services:
       - elastic_data:/usr/share/elasticsearch/data
 
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"\\|\"status\":\"yellow\"'"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
       interval: 20s
       timeout: 10s
       start_period: 40s
@@ -101,13 +105,9 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ──────────────────────────────────────────────────────────────────────────
-  # Kibana — SIEM dashboard and visualisation
-  # View Sentinel_Fusion alerts and hunt findings in Kibana Discover.
-  #
-  # UI:  http://localhost:5601
-  # ──────────────────────────────────────────────────────────────────────────
+  # ── Kibana — optional dashboard for ES (--profile elastic) ─────────────────
   kibana:
+    profiles: [elastic]
     image: docker.elastic.co/kibana/kibana:8.13.0
     container_name: sentinel-kibana
 

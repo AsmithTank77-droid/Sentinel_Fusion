@@ -35,8 +35,12 @@ COPY --from=builder /install /usr/local
 # Copy application source
 COPY . .
 
+# Register the package so all namespace packages (hunting, detection, etc.) are importable
+RUN pip install --no-deps -e .
+
 # Persistent volume mount point for SQLite database
-RUN mkdir -p /app/data && chown sentinel:sentinel /app/data
+RUN mkdir -p /app/data && chown sentinel:sentinel /app/data \
+ && chmod +x /app/scripts/docker_entrypoint.sh
 
 USER sentinel
 
@@ -51,13 +55,9 @@ ENV SENTINEL_DB=/app/data/sentinel.db \
 EXPOSE 8000
 
 # Healthcheck — polls the /api/v1/health endpoint every 30 seconds
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')" \
     || exit 1
 
-CMD ["sh", "-c", \
-     "uvicorn api.app:app \
-      --host $SENTINEL_HOST \
-      --port $SENTINEL_PORT \
-      --log-level $SENTINEL_LOG_LEVEL \
-      --workers $SENTINEL_WORKERS"]
+# Entrypoint seeds the DB on first boot then starts uvicorn
+CMD ["/app/scripts/docker_entrypoint.sh"]

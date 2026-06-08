@@ -23,8 +23,20 @@ Incorporates the full logic of:
 ## Quick Start
 
 ```bash
+# Docker — zero config, pre-seeded with a live incident and hunt findings
+docker-compose up --build
+# → Dashboard:  http://localhost:8000/dashboard
+# → API docs:   http://localhost:8000/docs
+
+# With Elasticsearch + Kibana SIEM
+docker-compose --profile elastic up --build
+# → Kibana:     http://localhost:5601
+
+# ── Local dev ──────────────────────────────────────────────────────────────
+
 # Install dependencies
 pip install -r requirements.txt
+pip install -e .
 
 # Run against an Nmap scan
 sentinel run --nra data/samples/nmap_scan.xml
@@ -424,7 +436,9 @@ Sentinel_Fusion/
 │   ├── simulate_attack.sh
 │   ├── generate_report.sh
 │   ├── demo_watch.sh               # Live watch demo — simulates brute force → scan → lateral movement
-│   └── demo_hunt.py                # Hunt engine demo — 6-run slow-burn attacker, all 4 hunt patterns
+│   ├── demo_hunt.py                # Hunt engine demo — 6-run slow-burn attacker, all 4 hunt patterns
+│   ├── docker_entrypoint.sh        # Container entrypoint — seeds DB on first boot then starts uvicorn
+│   └── docker_seed.py              # First-boot seeder — incident run + hunt demo runs
 │
 ├── tests/                          # Pytest test suite
 │   ├── test_ingest.py

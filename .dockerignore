@@ -26,7 +26,8 @@ htmlcov/
 *.db
 *.db-shm
 *.db-wal
-data/
+# Keep data/samples/ — seed script uses them at first boot
+data/*.db
 
 # Environment files with secrets
 .env
